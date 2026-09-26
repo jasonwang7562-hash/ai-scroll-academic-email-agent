@@ -17,8 +17,12 @@ Keep the AI Scroll topic. The instructor's feedback supports the core idea and s
 
 - The original Problem Statement and its NTULearn submission receipt are present.
 - The instructor feedback identifies the required evaluation and cost corrections.
-- No AI Scroll application code, frozen dataset, completed evaluation, GitHub repository, or final demo was found in the inspected PE6201 folders on 26 September 2026.
+- Version 1 of the product contract and extraction JSON schema are frozen.
+- A runnable Streamlit first slice accepts one email and displays a validated task, normalized deadline, verbatim evidence and a calendar preview.
+- The deterministic sample path and clarification path pass automated tests.
+- A local Git repository was initialized on 26 September 2026 at commit `3c524c6`.
+- The frozen 50-email dataset, completed evaluation, remote GitHub repository, final report and final demo are still outstanding.
 
 ## Next milestone
 
-Build the smallest end-to-end path using manually uploaded email text before adding Gmail integration. A successful first slice accepts one email, returns structured JSON with evidence, creates a timeline item, and displays a calendar proposal without writing it.
+Freeze the 50-email inventory and human gold-label schema, then implement cross-email matching and update merging without changing the Version 1 extraction contract.

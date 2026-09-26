@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AI Scroll Extracted Task",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "email_id",
+    "thread_id",
+    "course",
+    "task_type",
+    "task_title",
+    "deadline_iso",
+    "timezone",
+    "urgency",
+    "evidence_quote",
+    "relation_to_previous",
+    "calendar_action",
+    "needs_clarification",
+    "clarification_reason",
+    "source_subject"
+  ],
+  "properties": {
+    "email_id": {"type": "string", "minLength": 1},
+    "thread_id": {"type": "string", "minLength": 1},
+    "course": {"type": "string", "minLength": 1},
+    "task_type": {"enum": ["assignment", "exam", "class_change", "administrative", "other"]},
+    "task_title": {"type": "string", "minLength": 1},
+    "deadline_iso": {"type": ["string", "null"], "format": "date-time"},
+    "timezone": {"type": "string", "minLength": 1},
+    "urgency": {"enum": ["high", "medium", "low", "clarification"]},
+    "evidence_quote": {"type": "string"},
+    "relation_to_previous": {"enum": ["new", "update", "cancel", "unrelated"]},
+    "calendar_action": {"enum": ["create", "update", "do_not_create", "ask_clarification"]},
+    "needs_clarification": {"type": "boolean"},
+    "clarification_reason": {"type": ["string", "null"]},
+    "source_subject": {"type": "string"}
+  }
+}
+

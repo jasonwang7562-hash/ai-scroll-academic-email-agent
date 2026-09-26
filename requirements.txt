@@ -1,0 +1,5 @@
+streamlit>=1.45,<2
+pydantic>=2.10,<3
+python-dateutil>=2.9,<3
+pytest>=8,<9
+

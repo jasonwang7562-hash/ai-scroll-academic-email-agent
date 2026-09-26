@@ -21,8 +21,10 @@ Keep the AI Scroll topic. The instructor's feedback supports the core idea and s
 - A runnable Streamlit first slice accepts one email and displays a validated task, normalized deadline, verbatim evidence and a calendar preview.
 - The deterministic sample path and clarification path pass automated tests.
 - A local Git repository was initialized on 26 September 2026 at commit `3c524c6`.
-- The frozen 50-email dataset, completed evaluation, remote GitHub repository, final report and final demo are still outstanding.
+- A reproducible draft dataset now contains 50 synthetic emails across 38 threads: 30 independent emails and eight multi-email chains containing 20 emails.
+- Dataset structure, evidence integrity and thread counts pass automated validation. All draft labels remain pending Jason's human review before freezing.
+- The completed model evaluation, remote GitHub repository, final report and final demo are still outstanding.
 
 ## Next milestone
 
-Freeze the 50-email inventory and human gold-label schema, then implement cross-email matching and update merging without changing the Version 1 extraction contract.
+Review and freeze the 50 draft labels, then implement cross-email matching and update merging without changing the Version 1 extraction contract.

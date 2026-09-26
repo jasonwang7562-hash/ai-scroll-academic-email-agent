@@ -1,0 +1,20 @@
+{
+  "dataset_version": "draft-v1",
+  "generated_at": "2026-09-26T15:58:24+08:00",
+  "evaluation_reference_time": "2026-09-26T12:00:00+08:00",
+  "total_emails": 50,
+  "total_threads": 38,
+  "independent_email_threads": 30,
+  "multi_email_threads": 8,
+  "emails_in_multi_email_threads": 20,
+  "split_email_counts": {
+    "development": 20,
+    "test": 18,
+    "synthetic_holdout": 12
+  },
+  "clarification_cases": 3,
+  "no_deadline_emails": 7,
+  "deadline_update_messages": 11,
+  "cancel_messages": 1,
+  "label_status": "pending_human_review"
+}

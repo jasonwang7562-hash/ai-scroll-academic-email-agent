@@ -1,0 +1,11 @@
+{
+  "status": "PENDING",
+  "missing": [
+    "live model token usage",
+    "provider input/output prices",
+    "provider price date",
+    "exact model ID"
+  ],
+  "note": "No cost claim is produced until measured token usage and dated provider prices are supplied.",
+  "architecture_decision": "Poll the inbox without an LLM; call the model only for new messages."
+}

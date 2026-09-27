@@ -1,0 +1,12 @@
+{
+  "frozen_labels_present": false,
+  "frozen_checksum_present": false,
+  "live_model_configured": false,
+  "missing_environment_variables": [
+    "AI_SCROLL_API_KEY",
+    "AI_SCROLL_BASE_URL",
+    "AI_SCROLL_MODEL"
+  ],
+  "prompt_version": "v1.0",
+  "ready": false
+}

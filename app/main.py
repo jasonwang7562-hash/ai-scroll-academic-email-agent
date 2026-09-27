@@ -263,6 +263,29 @@ with evaluation_tab:
         with st.expander("Why these results are not final"):
             for limitation in evaluation["limitations"]:
                 st.markdown(f"- {limitation}")
+        st.divider()
+        st.subheader("Final-run readiness and cost")
+        preflight_path = ROOT / "04_evaluation" / "outputs" / "final_evaluation_preflight.json"
+        cost_path = ROOT / "04_evaluation" / "outputs" / "cost_analysis.json"
+        if preflight_path.exists():
+            preflight = json.loads(preflight_path.read_text(encoding="utf-8"))
+            status_cols = st.columns(3)
+            status_cols[0].metric("Frozen labels", "Ready" if preflight["frozen_labels_present"] else "Pending")
+            status_cols[1].metric("Model configuration", "Ready" if preflight["live_model_configured"] else "Pending")
+            status_cols[2].metric("Prompt version", preflight["prompt_version"])
+        if cost_path.exists():
+            cost = json.loads(cost_path.read_text(encoding="utf-8"))
+            if cost["status"] == "PENDING":
+                st.info("Cost result pending: " + ", ".join(cost["missing"]) + ".")
+                st.caption(cost["architecture_decision"])
+            else:
+                st.metric("Measured cost per email", f"US${cost['cost_per_processed_email_usd']:.6f}")
+                st.json({
+                    "on_demand": cost["on_demand"],
+                    "naive_hourly_llm_polling": cost["naive_hourly_llm_polling"],
+                    "naive_15_minute_llm_polling": cost["naive_15_minute_llm_polling"],
+                    "event_filtered_polling": cost["event_filtered_polling"],
+                })
 
 with review_tab:
     st.subheader("Human review before the final model run")

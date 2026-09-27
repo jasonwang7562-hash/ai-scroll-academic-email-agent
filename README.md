@@ -44,6 +44,9 @@ python 04_evaluation/merge_smoke_eval.py
 python 04_evaluation/safety_gate_eval.py
 python 04_evaluation/score_development.py
 python 02_data/freeze_labels.py
+python 04_evaluation/run_final_evaluation.py
+python 04_evaluation/run_final_evaluation.py --execute
+python 04_evaluation/cost_analysis.py --model "exact-model-id" --price-date YYYY-MM-DD --input-price 0 --output-price 0
 ```
 
 ## Optional live model configuration
@@ -58,6 +61,8 @@ python -m streamlit run app/main.py
 ```
 
 The first assessed run should record the exact model ID and provider price date. Prices are deliberately not hard-coded.
+
+`run_final_evaluation.py` is safe by default: without `--execute` it only writes a preflight report. Even with `--execute`, it refuses to call a model until the reviewed labels and their checksum exist and all three live-model environment variables are present. The cost script automatically uses the newest final usage JSONL and compares on-demand processing with naive hourly, naive 15-minute and event-filtered polling.
 
 ## Calendar safety
 

@@ -29,6 +29,8 @@ Keep the AI Scroll topic. The instructor's feedback supports the core idea and s
 - The development safety test reports zero unauthorized writes using the local in-memory calendar adapter. External Google Calendar integration is still outstanding.
 - A reproducible provisional offline evaluation now preserves baseline outputs, development-system outputs, field-level errors, split metrics and explicit denominators. On draft labels, the current pipeline scores 43/50 task types, 40/43 exact deadlines, 48/50 urgency labels, 45/50 calendar actions and 8/8 multi-email final states; these are not final report numbers.
 - The Streamlit app now includes a human label-review workflow. It shows the source email, validates edited fields and verbatim evidence, tracks approval progress, and keeps the freeze command blocked until all 50 labels are explicitly approved.
+- A gated final-evaluation runner now performs a safe preflight by default and refuses live calls until frozen labels, checksum and model configuration are present. Its execution mode preserves per-case outputs plus token and latency usage.
+- A cost pipeline now compares on-demand, naive hourly, naive 15-minute and event-filtered polling. It currently reports `PENDING` rather than inventing a cost because live token usage and dated provider prices are not yet available.
 - The live-model evaluation, token and cost analysis, independent real-email test set, remote GitHub repository, final report and final demo are still outstanding.
 
 ## Next milestone

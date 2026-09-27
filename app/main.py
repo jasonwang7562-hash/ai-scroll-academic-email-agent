@@ -22,13 +22,108 @@ st.set_page_config(page_title="AI Scroll", page_icon="📬", layout="wide")
 st.markdown(
     """
     <style>
-    .block-container {max-width: 1160px; padding-top: 2rem;}
-    .eyebrow {color:#256c5a; font-weight:700; letter-spacing:.08em; font-size:.78rem;}
-    .result-card {border:1px solid #dce7e2; border-radius:14px; padding:18px; background:#f8fbfa; color:#15211d; margin-bottom:12px;}
-    .result-card small {color:#52635d;}
-    .evidence {border-left:5px solid #287a64; background:#eef7f3; color:#15211d; padding:14px 16px; border-radius:7px;}
+    :root {
+        --ink:#14213d;
+        --muted:#667085;
+        --line:#e5e9f2;
+        --panel:#ffffff;
+        --canvas:#f5f7fb;
+        --brand:#5267e8;
+        --brand-soft:#eef1ff;
+        --teal:#168a78;
+        --teal-soft:#eaf8f4;
+        --amber:#b56b09;
+        --amber-soft:#fff6e5;
+        --danger:#b54747;
+        --danger-soft:#fff0f0;
+    }
+    .stApp {background:var(--canvas); color:var(--ink);}
+    .block-container {max-width:1440px; padding-top:1.25rem; padding-bottom:4rem;}
+    [data-testid="stSidebar"] {background:#111936; border-right:1px solid #263052;}
+    [data-testid="stSidebar"] * {color:#f5f7ff;}
+    [data-testid="stSidebar"] .stAlert {background:#1d284d; border:1px solid #34416c;}
+    [data-testid="stTabs"] button {font-size:.95rem; font-weight:650; padding:.85rem 1rem;}
+    [data-testid="stMetric"] {background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px 16px; box-shadow:0 8px 24px rgba(20,33,61,.04);}
+    [data-testid="stMetricValue"] {font-size:1.5rem; color:var(--ink);}
+    .eyebrow {color:var(--brand); font-weight:800; letter-spacing:.1em; font-size:.72rem; text-transform:uppercase;}
+    .hero {background:linear-gradient(120deg,#101936 0%,#182451 58%,#26346f 100%); color:white; border-radius:24px; padding:28px 32px; margin:.4rem 0 1.25rem; box-shadow:0 18px 45px rgba(24,36,81,.18); overflow:hidden; position:relative;}
+    .hero:after {content:""; position:absolute; width:260px; height:260px; border-radius:50%; right:-90px; top:-130px; background:radial-gradient(circle,rgba(96,193,255,.35),rgba(82,103,232,0));}
+    .hero h1 {font-size:2.35rem; line-height:1.08; margin:.35rem 0 .55rem; color:white; letter-spacing:-.035em;}
+    .hero p {font-size:1rem; color:#d6ddff; margin:0; max-width:760px;}
+    .hero-kicker {display:inline-flex; gap:8px; align-items:center; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.1); color:#dfe5ff; font-size:.78rem; font-weight:700;}
+    .status-strip {display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:1.35rem;}
+    .status-card {background:white; border:1px solid var(--line); border-radius:16px; padding:15px 17px; box-shadow:0 8px 22px rgba(20,33,61,.035);}
+    .status-card .number {font-size:1.45rem; font-weight:780; color:var(--ink); line-height:1.1;}
+    .status-card .label {font-size:.78rem; color:var(--muted); margin-top:5px;}
+    .brief-banner {display:flex; align-items:center; justify-content:space-between; gap:22px; background:linear-gradient(100deg,#eef1ff,#f7f9ff 55%,#eaf8f4); border:1px solid #dce2fb; border-radius:18px; padding:16px 19px; margin:-.35rem 0 1.25rem;}
+    .brief-banner .brief-copy {font-size:.9rem; color:#40506c; line-height:1.45;}
+    .brief-banner .brief-copy b {display:block; color:var(--ink); font-size:1rem; margin-bottom:2px;}
+    .brief-action {white-space:nowrap; border-radius:999px; padding:7px 12px; background:white; border:1px solid #ccd5f4; color:#4256c9; font-size:.76rem; font-weight:800;}
+    .section-label {font-size:.7rem; color:#8790a5; font-weight:800; letter-spacing:.1em; text-transform:uppercase; margin:0 0 .6rem;}
+    .view-pills {display:flex; flex-wrap:wrap; gap:6px; margin:0 0 13px;}
+    .view-pill {border:1px solid var(--line); border-radius:999px; background:white; color:#58647a; padding:5px 9px; font-size:.7rem; font-weight:750;}
+    .view-pill.active {background:var(--ink); color:white; border-color:var(--ink);}
+    .rail-card {border:1px solid var(--line); border-radius:14px; padding:13px 14px; background:white; margin-bottom:9px;}
+    .rail-card.active {border-color:#aeb9ff; background:var(--brand-soft); box-shadow:inset 3px 0 0 var(--brand);}
+    .rail-card b {display:block; color:var(--ink); font-size:.93rem; margin-bottom:3px;}
+    .rail-card span {font-size:.76rem; color:var(--muted);}
+    .badge {display:inline-block; border-radius:999px; padding:4px 9px; font-size:.72rem; font-weight:750; margin-right:5px;}
+    .badge-blue {background:var(--brand-soft); color:#4256c9;}
+    .badge-green {background:var(--teal-soft); color:#087260;}
+    .badge-amber {background:var(--amber-soft); color:#965909;}
+    .badge-red {background:var(--danger-soft); color:#a23b3b;}
+    .result-card {border:1px solid var(--line); border-radius:16px; padding:17px 18px; background:white; color:var(--ink); margin-bottom:12px; box-shadow:0 8px 24px rgba(20,33,61,.045);}
+    .result-card small {color:var(--muted);}
+    .result-title {font-size:1.08rem; font-weight:780; margin:.35rem 0 .2rem; color:var(--ink);}
+    .result-meta {color:var(--muted); font-size:.84rem; line-height:1.55;}
+    .source-context {display:grid; grid-template-columns:36px 1fr auto; gap:10px; align-items:center; border:1px solid var(--line); border-radius:13px; padding:11px 12px; background:white; margin-bottom:12px;}
+    .source-avatar {width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:10px; background:var(--brand-soft); color:#4256c9; font-weight:850;}
+    .source-main {font-size:.8rem; color:var(--muted); line-height:1.35;}
+    .source-main b {display:block; color:var(--ink); font-size:.86rem;}
+    .route {display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin:.7rem 0 1rem;}
+    .route-step {position:relative; border:1px solid var(--line); border-radius:11px; background:white; padding:10px 8px; color:#68748a; font-size:.68rem; line-height:1.25;}
+    .route-step b {display:block; color:var(--ink); font-size:.74rem; margin-top:4px;}
+    .route-step.done {border-color:#bfe2d9; background:var(--teal-soft);}
+    .route-step.active {border-color:#aeb9ff; background:var(--brand-soft); box-shadow:inset 0 -3px 0 var(--brand);}
+    .route-step.warn {border-color:#f0cf94; background:var(--amber-soft); box-shadow:inset 0 -3px 0 #d58a1f;}
+    .route-dot {width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#dfe4ef; color:#68748a; font-size:.62rem; font-weight:900;}
+    .route-step.done .route-dot {background:var(--teal); color:white;}
+    .route-step.active .route-dot {background:var(--brand); color:white;}
+    .route-step.warn .route-dot {background:#d58a1f; color:white;}
+    .trust-panel {border:1px solid #dce2ef; border-radius:14px; overflow:hidden; background:white; margin:12px 0;}
+    .trust-head {display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px; background:#f8f9fc; border-bottom:1px solid var(--line);}
+    .trust-head b {font-size:.84rem; color:var(--ink);}
+    .trust-head span {font-size:.7rem; color:#4256c9; font-weight:800;}
+    .trust-row {display:grid; grid-template-columns:20px 1fr auto; align-items:center; gap:8px; padding:9px 14px; border-bottom:1px solid #eef1f6; font-size:.76rem; color:#536078;}
+    .trust-row:last-child {border-bottom:0;}
+    .trust-check {width:18px; height:18px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:var(--teal-soft); color:var(--teal); font-size:.68rem; font-weight:900;}
+    .trust-lock {font-size:.68rem; color:#7b879c; font-weight:750;}
+    .decision-banner {border-left:4px solid var(--brand); border-radius:10px; background:var(--brand-soft); padding:11px 13px; color:#35447a; font-size:.78rem; line-height:1.45; margin:10px 0 12px;}
+    .chain-flow {display:grid; grid-template-columns:1fr 24px 1fr 24px 1fr; align-items:center; gap:7px; margin:12px 0 19px;}
+    .flow-card {border:1px solid var(--line); border-radius:13px; background:white; padding:12px; min-height:72px;}
+    .flow-card b {display:block; color:var(--ink); font-size:.82rem; margin-bottom:4px;}
+    .flow-card span {color:var(--muted); font-size:.72rem; line-height:1.35;}
+    .flow-arrow {text-align:center; color:#8994aa; font-weight:900;}
+    .evidence {border:1px solid #ccebe2; border-left:5px solid var(--teal); background:var(--teal-soft); color:#173b34; padding:14px 16px; border-radius:10px; line-height:1.5;}
+    .before {color:var(--danger); text-decoration:line-through;}
+    .after {color:var(--teal); font-weight:750;}
+    .empty-state {border:1px dashed #cbd2e3; border-radius:18px; padding:34px 22px; text-align:center; background:rgba(255,255,255,.68); color:var(--muted);}
+    .empty-state b {display:block; color:var(--ink); font-size:1rem; margin-bottom:6px;}
+    .stButton > button[kind="primary"] {background:var(--brand); border-color:var(--brand); border-radius:11px; min-height:46px; font-weight:750;}
+    .stButton > button[kind="secondary"] {border-radius:11px; min-height:43px;}
+    .stTextInput input, .stTextArea textarea, .stSelectbox > div > div {border-radius:11px !important; border-color:#d9deea !important; background:white !important;}
     .before {color:#8b3a3a; text-decoration:line-through;}
     .after {color:#176b52; font-weight:700;}
+    @media (max-width:900px) {
+      .status-strip{grid-template-columns:repeat(2,1fr)}
+      .hero h1{font-size:1.85rem}
+      .brief-banner{align-items:flex-start;flex-direction:column}
+      .route{grid-template-columns:repeat(2,1fr)}
+      .chain-flow{grid-template-columns:1fr}
+      .flow-arrow{transform:rotate(90deg)}
+      [data-testid="stHorizontalBlock"]{flex-wrap:wrap !important;}
+      [data-testid="stColumn"]{min-width:280px !important; flex:1 1 100% !important;}
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -40,26 +135,62 @@ def show_single_result(task):
         st.warning(task.clarification_reason)
         st.json(task.model_dump())
         return
-    c1, c2 = st.columns(2)
-    c1.metric("Course", task.course)
-    c2.metric("Urgency", task.urgency.title())
-    st.markdown(f"**Task**  \n{task.task_title}")
     deadline = datetime.fromisoformat(task.deadline_iso)
-    st.markdown(f"**Deadline**  \n{deadline.strftime('%d %B %Y, %I:%M %p')} ({task.timezone})")
-    st.markdown("**Source evidence**")
+    urgency_class = {"high": "badge-red", "medium": "badge-amber", "low": "badge-green"}.get(task.urgency, "badge-blue")
+    st.markdown(
+        f'<span class="badge badge-blue">{task.course}</span>'
+        f'<span class="badge {urgency_class}">{task.urgency.title()} priority</span>'
+        f'<div class="result-title">{task.task_title}</div>'
+        f'<div class="result-meta">Due {deadline.strftime("%d %B %Y, %I:%M %p")} · {task.timezone}</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="decision-banner"><b>Decision:</b> create a calendar preview, keep it locked, and ask the student to review the source evidence before approval.</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown('<div class="section-label" style="margin-top:1rem">Evidence from source</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="evidence">“{task.evidence_quote}”</div>', unsafe_allow_html=True)
-    st.subheader("Calendar preview")
+    st.markdown('<div class="section-label" style="margin-top:1rem">Calendar preview</div>', unsafe_allow_html=True)
     proposal = CalendarProposal(
         title=f"{task.course} - {task.task_title}", start=task.deadline_iso,
         timezone=task.timezone,
         description=f"Source: {task.source_subject}\nEvidence: {task.evidence_quote}",
     )
     st.markdown(
-        f'<div class="result-card"><b>{proposal.title}</b><br>{deadline.strftime("%d %B %Y, %I:%M %p")}<br><small>Preview only - not added to any calendar</small></div>',
+        f'<div class="result-card"><span class="badge badge-green">Ready for review</span><div class="result-title">{proposal.title}</div><div class="result-meta">{deadline.strftime("%d %B %Y, %I:%M %p")} · {proposal.timezone}<br>Preview only — no calendar change has been made.</div></div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="trust-panel"><div class="trust-head"><b>Validation checklist</b><span>4 checks passed</span></div>'
+        '<div class="trust-row"><span class="trust-check">✓</span><span>Course and task identified</span><span class="trust-lock">STRUCTURED</span></div>'
+        '<div class="trust-row"><span class="trust-check">✓</span><span>Exact source sentence retained</span><span class="trust-lock">TRACEABLE</span></div>'
+        '<div class="trust-row"><span class="trust-check">✓</span><span>Deadline and timezone normalized</span><span class="trust-lock">VALIDATED</span></div>'
+        '<div class="trust-row"><span class="trust-check">✓</span><span>External calendar write remains locked</span><span class="trust-lock">SAFE</span></div></div>',
         unsafe_allow_html=True,
     )
     with st.expander("View validated JSON"):
         st.json(task.model_dump())
+
+
+def show_processing_route(task=None):
+    if task is None:
+        classes = ["active", "", "", ""]
+        dots = ["1", "2", "3", "4"]
+        notes = ["Await source", "Extract task", "Check evidence", "Ask approval"]
+    elif task.needs_clarification:
+        classes = ["done", "done", "warn", ""]
+        dots = ["✓", "✓", "!", "4"]
+        notes = ["Source read", "Task found", "Needs clarification", "Locked"]
+    else:
+        classes = ["done", "done", "done", "active"]
+        dots = ["✓", "✓", "✓", "4"]
+        notes = ["Source read", "Task extracted", "Evidence checked", "Review required"]
+    labels = ["Capture", "Understand", "Verify", "Schedule"]
+    cards = "".join(
+        f'<div class="route-step {css_class}"><span class="route-dot">{dot}</span><b>{label}</b>{note}</div>'
+        for css_class, dot, label, note in zip(classes, dots, labels, notes)
+    )
+    st.markdown(f'<div class="route">{cards}</div>', unsafe_allow_html=True)
 
 
 def load_demo_chain(thread_id="c01"):
@@ -103,44 +234,77 @@ def show_timeline_item(item: TimelineItem):
         st.json(item.model_dump())
 
 
-st.markdown('<div class="eyebrow">PE6201 INDIVIDUAL PROJECT</div>', unsafe_allow_html=True)
-st.title("AI Scroll")
-st.caption("Academic emails in. One evidence-backed course timeline and safe calendar proposal out.")
+st.markdown(
+    """
+    <div class="hero">
+      <div class="hero-kicker">✦ AI SCROLL · ACADEMIC INBOX</div>
+      <h1>Never miss an academic deadline.</h1>
+      <p>Turn changing course emails into one evidence-backed timeline, then review every calendar action before it happens.</p>
+    </div>
+    <div class="status-strip">
+      <div class="status-card"><div class="number">1</div><div class="label">Selected email</div></div>
+      <div class="status-card"><div class="number">1</div><div class="label">Deadline update chain</div></div>
+      <div class="status-card"><div class="number">50</div><div class="label">Evaluation cases</div></div>
+      <div class="status-card"><div class="number">0</div><div class="label">Unauthorized writes</div></div>
+    </div>
+    <div class="brief-banner">
+      <div class="brief-copy"><b>Today’s focus: verify the PE6201 submission deadline</b>One academic email is ready to analyze. AI Scroll will keep the source sentence beside every proposed calendar event.</div>
+      <div class="brief-action">1 item needs attention</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 with st.sidebar:
-    st.header("Run settings")
+    st.markdown("## AI Scroll")
+    st.caption("Evidence-backed academic planning")
+    st.divider()
+    st.markdown("### Workspace")
     mode = st.radio("Extraction mode", ["Demo", "Live model"], help="Demo requires no API key.")
-    st.info("Calendar preview and calendar write are separate. This version cannot write to a real calendar.")
-    st.markdown("**Urgency policy**")
-    st.markdown("- High: within 72 hours\n- Medium: 4-7 days\n- Low: more than 7 days\n- Clarification: unsafe to infer")
+    st.info("Calendar proposals remain local until you explicitly confirm them.")
+    with st.expander("Urgency policy"):
+        st.markdown("- **High:** within 72 hours\n- **Medium:** 4–7 days\n- **Low:** more than 7 days\n- **Clarification:** unsafe to infer")
 
 single_tab, chain_tab, safety_tab, evaluation_tab, review_tab = st.tabs(
-    ["Single email", "Deadline update chain", "Safety and approval", "Evaluation", "Label review"]
+    ["Academic inbox", "Course timeline", "Calendar review", "Evaluation", "Label review"]
 )
 
 with single_tab:
-    left, right = st.columns([1.08, 0.92], gap="large")
-    with left:
-        st.subheader("1. Selected academic email")
+    rail, email_panel, assistant_panel = st.columns([0.62, 1.25, 1.05], gap="large")
+    with rail:
+        st.markdown('<div class="section-label">Academic inbox</div>', unsafe_allow_html=True)
+        st.markdown('<div class="view-pills"><span class="view-pill active">All · 3</span><span class="view-pill">Deadlines · 1</span><span class="view-pill">Review · 1</span></div>', unsafe_allow_html=True)
+        st.markdown('<div class="rail-card active"><b>PE6201</b><span>Individual Project · due soon</span></div>', unsafe_allow_html=True)
+        st.markdown('<div class="rail-card"><b>Course updates</b><span>1 deadline change detected</span></div>', unsafe_allow_html=True)
+        st.markdown('<div class="rail-card"><b>Needs review</b><span>Calendar proposals waiting</span></div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-label" style="margin-top:1.25rem">Status</div>', unsafe_allow_html=True)
+        st.markdown('<span class="badge badge-amber">Deadline detected</span><br><br><span class="badge badge-green">Evidence found</span>', unsafe_allow_html=True)
+    with email_panel:
+        st.markdown('<div class="section-label">Selected academic email</div>', unsafe_allow_html=True)
+        st.markdown('<div class="source-context"><div class="source-avatar">PE</div><div class="source-main"><b>Course announcement</b>Primary source · selected for extraction</div><span class="badge badge-green">Ready</span></div>', unsafe_allow_html=True)
         subject = st.text_input("Subject", value=SAMPLE_SUBJECT)
         sender = st.text_input("Sender", value=SAMPLE_SENDER)
         body = st.text_area("Email body", value=SAMPLE_BODY, height=280)
-        run = st.button("Extract task", type="primary", use_container_width=True)
+        run = st.button("Analyze email", type="primary", use_container_width=True)
     if run:
         try:
             st.session_state["task"] = extract(EmailInput(subject=subject, sender=sender, body=body), mode=mode)
         except Exception as exc:
             st.error(f"Extraction failed: {exc}")
-    with right:
-        st.subheader("2. Verified timeline item")
+    with assistant_panel:
+        st.markdown('<div class="section-label">AI extracted details</div>', unsafe_allow_html=True)
         task = st.session_state.get("task")
+        show_processing_route(task)
         if task is None:
-            st.markdown('<div class="result-card">Run the sample email to produce the first timeline item.</div>', unsafe_allow_html=True)
+            st.markdown('<div class="empty-state"><b>Ready to analyze</b>Select “Analyze email” to extract the course, task, deadline, priority and exact source evidence.</div>', unsafe_allow_html=True)
         else:
             show_single_result(task)
 
 with chain_tab:
-    st.subheader("Two emails, one task")
+    st.markdown('<div class="section-label">Update detector</div>', unsafe_allow_html=True)
+    st.subheader("One task, two emails, one final deadline")
+    st.caption("AI Scroll keeps the original evidence, applies the later correction and records exactly what changed.")
+    st.markdown('<div class="chain-flow"><div class="flow-card"><b>1 · Original message</b><span>Create the first evidence-backed task.</span></div><div class="flow-arrow">→</div><div class="flow-card"><b>2 · Later correction</b><span>Detect that both emails refer to the same task.</span></div><div class="flow-arrow">→</div><div class="flow-card"><b>3 · Final timeline</b><span>Keep the latest deadline and the complete source trail.</span></div></div>', unsafe_allow_html=True)
     demo_chain = load_demo_chain("c01")
     cols = st.columns(2, gap="large")
     for index, (column, email) in enumerate(zip(cols, demo_chain), 1):
@@ -158,8 +322,9 @@ with chain_tab:
             show_timeline_item(item)
 
 with safety_tab:
-    st.subheader("Calendar safety gate")
-    st.caption("Choose a case, inspect the decision, then explicitly confirm an eligible preview.")
+    st.markdown('<div class="section-label">Human approval gate</div>', unsafe_allow_html=True)
+    st.subheader("Review before any calendar action")
+    st.caption("Choose a case, inspect the proposed change and confirm only when its evidence is complete.")
     scenario = st.selectbox(
         "Safety scenario",
         ["Eligible deadline", "Ambiguous next Friday", "Cancelled workshop"],

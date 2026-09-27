@@ -32,6 +32,9 @@ Keep the AI Scroll topic. The instructor's feedback supports the core idea and s
 - A gated final-evaluation runner now performs a safe preflight by default and refuses live calls until frozen labels, checksum and model configuration are present. Its execution mode preserves per-case outputs plus token and latency usage.
 - A cost pipeline now compares on-demand, naive hourly, naive 15-minute and event-filtered polling. It currently reports `PENDING` rather than inventing a cost because live token usage and dated provider prices are not yet available.
 - A visually verified three-page Word draft of the Business and Technical Trade Off Analysis now covers the problem, hybrid architecture, build-versus-buy decision, dataset counts, provisional component metrics, cost design, safety controls and limitations in 1,024 words. Final model and measured cost values remain explicitly pending.
+- A competitor-informed UI revision now combines a proactive status brief, three-column academic inbox, evidence cards, timeline update view and explicit calendar-review flow. The design decisions are recorded in `docs/COMPETITOR_UI_DECISIONS.md`; extraction and safety behavior remain unchanged.
+- A second competitor study added a daily focus banner, academic work-queue filters, source context, a visible capture-to-approval route and an explanatory merge flow. The adopted and rejected patterns are recorded in `docs/COMPETITOR_UI_ROUND_2.md`.
+- A third competitor study strengthened trust and reviewability with a dynamic processing route, a human-readable decision statement and a four-check validation panel. The rationale is recorded in `docs/COMPETITOR_UI_ROUND_3.md`.
 - The live-model evaluation, token and cost analysis, independent real-email test set, remote GitHub repository, final report and final demo are still outstanding.
 
 ## Next milestone

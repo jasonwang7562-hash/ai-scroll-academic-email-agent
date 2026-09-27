@@ -110,7 +110,9 @@ with st.sidebar:
     st.markdown("**Urgency policy**")
     st.markdown("- High: within 72 hours\n- Medium: 4-7 days\n- Low: more than 7 days\n- Clarification: unsafe to infer")
 
-single_tab, chain_tab, safety_tab = st.tabs(["Single email", "Deadline update chain", "Safety and approval"])
+single_tab, chain_tab, safety_tab, evaluation_tab = st.tabs(
+    ["Single email", "Deadline update chain", "Safety and approval", "Evaluation"]
+)
 
 with single_tab:
     left, right = st.columns([1.08, 0.92], gap="large")
@@ -218,3 +220,42 @@ with safety_tab:
 
     with st.expander("View safety audit"):
         st.json(st.session_state["calendar_audit"][-10:])
+
+with evaluation_tab:
+    st.subheader("Provisional offline evaluation")
+    st.warning(
+        "These are development diagnostics, not final assignment results. "
+        "All labels still require human review, and no live language model was run."
+    )
+    metrics_path = ROOT / "04_evaluation" / "outputs" / "development_metrics.json"
+    if not metrics_path.exists():
+        st.info("Run `python 04_evaluation/score_development.py` to create the comparison.")
+    else:
+        evaluation = json.loads(metrics_path.read_text(encoding="utf-8"))
+        systems = evaluation["systems"]
+        baseline = systems["keyword_date_baseline_v1"]["metrics"]
+        current = systems["deterministic_dev_pipeline_v1"]["metrics"]
+        labels = [
+            ("Course", "course_identification"),
+            ("Task type", "task_type_classification"),
+            ("Exact deadline", "deadline_exact_on_deadline_cases"),
+            ("Urgency", "urgency_classification"),
+            ("Calendar action", "calendar_action"),
+            ("Cross-email merge", "cross_email_merging"),
+        ]
+        comparison = []
+        for label, key in labels:
+            comparison.append({
+                "Capability": label,
+                "Keyword/date baseline": f"{baseline[key]['correct']}/{baseline[key]['total']}",
+                "Current pipeline": f"{current[key]['correct']}/{current[key]['total']}",
+            })
+        st.table(comparison)
+        st.caption(
+            f"Reference time: {evaluation['reference_time']} · "
+            f"Population: {evaluation['population']['emails']} emails, "
+            f"{evaluation['population']['multi_email_threads']} multi-email threads"
+        )
+        with st.expander("Why these results are not final"):
+            for limitation in evaluation["limitations"]:
+                st.markdown(f"- {limitation}")

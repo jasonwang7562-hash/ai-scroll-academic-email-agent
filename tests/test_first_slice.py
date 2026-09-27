@@ -40,3 +40,13 @@ def test_evidence_is_verbatim():
     )
     assert result.evidence_quote in SAMPLE_BODY
 
+
+def test_informational_email_does_not_request_clarification():
+    email = EmailInput(
+        subject="PE6201 weekly resources",
+        body="The PE6201 weekly resources are now available in NTU Learn.",
+    )
+    result = demo_extract(email, now=NOW)
+    assert result.calendar_action == "do_not_create"
+    assert result.needs_clarification is False
+    assert result.evidence_quote in email.body

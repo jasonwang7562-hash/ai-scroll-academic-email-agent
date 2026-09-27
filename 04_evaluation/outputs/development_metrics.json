@@ -1,0 +1,645 @@
+{
+  "evaluation_type": "provisional_offline_evaluation",
+  "run_at": "2026-09-27T18:14:23+08:00",
+  "reference_time": "2026-09-26T12:00:00+08:00",
+  "population": {
+    "emails": 50,
+    "threads": 38,
+    "multi_email_threads": 8,
+    "splits": {
+      "development": 20,
+      "test": 18,
+      "synthetic_holdout": 12
+    }
+  },
+  "readiness": "NOT_FINAL",
+  "limitations": [
+    "All gold labels are pending human review and are not frozen.",
+    "The data is synthetic and was generated in the same project as the system.",
+    "The synthetic holdout is not an independent real-world test set.",
+    "No live language model was run because no API configuration is present.",
+    "Token cost and latency comparisons are unavailable for deterministic systems."
+  ],
+  "systems": {
+    "keyword_date_baseline_v1": {
+      "description": "Keyword/date parser with no cross-email memory.",
+      "metrics": {
+        "course_identification": {
+          "correct": 50,
+          "total": 50,
+          "percent": 100.0
+        },
+        "task_type_classification": {
+          "correct": 28,
+          "total": 50,
+          "percent": 56.0
+        },
+        "deadline_exact_on_deadline_cases": {
+          "correct": 32,
+          "total": 43,
+          "percent": 74.4
+        },
+        "false_deadlines_on_no_deadline_cases": {
+          "count": 0,
+          "total": 7
+        },
+        "urgency_classification": {
+          "correct": 41,
+          "total": 50,
+          "percent": 82.0
+        },
+        "urgency_confusion": {
+          "clarification->low": 3,
+          "high->clarification": 1,
+          "high->high": 5,
+          "high->low": 1,
+          "low->clarification": 1,
+          "low->low": 28,
+          "medium->low": 3,
+          "medium->medium": 8
+        },
+        "high_priority_deadline_recall": {
+          "correct": 5,
+          "total": 7,
+          "percent": 71.4
+        },
+        "calendar_action": {
+          "correct": 28,
+          "total": 50,
+          "percent": 56.0
+        },
+        "relation_classification": {
+          "correct": 38,
+          "total": 50,
+          "percent": 76.0
+        },
+        "clarification_precision": {
+          "correct": 0,
+          "total": 2,
+          "percent": 0.0
+        },
+        "clarification_recall": {
+          "correct": 0,
+          "total": 3,
+          "percent": 0.0
+        },
+        "abstention_rate": {
+          "count": 2,
+          "total": 50,
+          "percent": 4.0
+        },
+        "cross_email_merging": {
+          "correct": 0,
+          "total": 8,
+          "percent": 0.0
+        }
+      },
+      "metrics_by_split": {
+        "development": {
+          "course_identification": {
+            "correct": 20,
+            "total": 20,
+            "percent": 100.0
+          },
+          "task_type_classification": {
+            "correct": 10,
+            "total": 20,
+            "percent": 50.0
+          },
+          "deadline_exact_on_deadline_cases": {
+            "correct": 16,
+            "total": 17,
+            "percent": 94.1
+          },
+          "false_deadlines_on_no_deadline_cases": {
+            "count": 0,
+            "total": 3
+          },
+          "urgency_classification": {
+            "correct": 17,
+            "total": 20,
+            "percent": 85.0
+          },
+          "urgency_confusion": {
+            "clarification->low": 2,
+            "high->high": 4,
+            "low->low": 7,
+            "medium->low": 1,
+            "medium->medium": 6
+          },
+          "high_priority_deadline_recall": {
+            "correct": 4,
+            "total": 4,
+            "percent": 100.0
+          },
+          "calendar_action": {
+            "correct": 14,
+            "total": 20,
+            "percent": 70.0
+          },
+          "relation_classification": {
+            "correct": 17,
+            "total": 20,
+            "percent": 85.0
+          },
+          "clarification_precision": {
+            "correct": 0,
+            "total": 0,
+            "percent": null
+          },
+          "clarification_recall": {
+            "correct": 0,
+            "total": 2,
+            "percent": 0.0
+          },
+          "abstention_rate": {
+            "count": 0,
+            "total": 20,
+            "percent": 0.0
+          }
+        },
+        "test": {
+          "course_identification": {
+            "correct": 18,
+            "total": 18,
+            "percent": 100.0
+          },
+          "task_type_classification": {
+            "correct": 6,
+            "total": 18,
+            "percent": 33.3
+          },
+          "deadline_exact_on_deadline_cases": {
+            "correct": 9,
+            "total": 14,
+            "percent": 64.3
+          },
+          "false_deadlines_on_no_deadline_cases": {
+            "count": 0,
+            "total": 4
+          },
+          "urgency_classification": {
+            "correct": 13,
+            "total": 18,
+            "percent": 72.2
+          },
+          "urgency_confusion": {
+            "clarification->low": 1,
+            "high->clarification": 1,
+            "high->high": 1,
+            "high->low": 1,
+            "low->clarification": 1,
+            "low->low": 12,
+            "medium->low": 1
+          },
+          "high_priority_deadline_recall": {
+            "correct": 1,
+            "total": 3,
+            "percent": 33.3
+          },
+          "calendar_action": {
+            "correct": 9,
+            "total": 18,
+            "percent": 50.0
+          },
+          "relation_classification": {
+            "correct": 13,
+            "total": 18,
+            "percent": 72.2
+          },
+          "clarification_precision": {
+            "correct": 0,
+            "total": 2,
+            "percent": 0.0
+          },
+          "clarification_recall": {
+            "correct": 0,
+            "total": 1,
+            "percent": 0.0
+          },
+          "abstention_rate": {
+            "count": 2,
+            "total": 18,
+            "percent": 11.1
+          }
+        },
+        "synthetic_holdout": {
+          "course_identification": {
+            "correct": 12,
+            "total": 12,
+            "percent": 100.0
+          },
+          "task_type_classification": {
+            "correct": 12,
+            "total": 12,
+            "percent": 100.0
+          },
+          "deadline_exact_on_deadline_cases": {
+            "correct": 7,
+            "total": 12,
+            "percent": 58.3
+          },
+          "false_deadlines_on_no_deadline_cases": {
+            "count": 0,
+            "total": 0
+          },
+          "urgency_classification": {
+            "correct": 11,
+            "total": 12,
+            "percent": 91.7
+          },
+          "urgency_confusion": {
+            "low->low": 9,
+            "medium->low": 1,
+            "medium->medium": 2
+          },
+          "high_priority_deadline_recall": {
+            "correct": 0,
+            "total": 0,
+            "percent": null
+          },
+          "calendar_action": {
+            "correct": 5,
+            "total": 12,
+            "percent": 41.7
+          },
+          "relation_classification": {
+            "correct": 8,
+            "total": 12,
+            "percent": 66.7
+          },
+          "clarification_precision": {
+            "correct": 0,
+            "total": 0,
+            "percent": null
+          },
+          "clarification_recall": {
+            "correct": 0,
+            "total": 0,
+            "percent": null
+          },
+          "abstention_rate": {
+            "count": 0,
+            "total": 12,
+            "percent": 0.0
+          }
+        }
+      }
+    },
+    "deterministic_dev_pipeline_v1": {
+      "description": "Current deterministic AI Scroll development pipeline.",
+      "metrics": {
+        "course_identification": {
+          "correct": 50,
+          "total": 50,
+          "percent": 100.0
+        },
+        "task_type_classification": {
+          "correct": 43,
+          "total": 50,
+          "percent": 86.0
+        },
+        "deadline_exact_on_deadline_cases": {
+          "correct": 40,
+          "total": 43,
+          "percent": 93.0
+        },
+        "false_deadlines_on_no_deadline_cases": {
+          "count": 0,
+          "total": 7
+        },
+        "urgency_classification": {
+          "correct": 48,
+          "total": 50,
+          "percent": 96.0
+        },
+        "urgency_confusion": {
+          "clarification->clarification": 3,
+          "high->clarification": 1,
+          "high->high": 6,
+          "low->clarification": 1,
+          "low->low": 28,
+          "medium->medium": 11
+        },
+        "high_priority_deadline_recall": {
+          "correct": 6,
+          "total": 7,
+          "percent": 85.7
+        },
+        "calendar_action": {
+          "correct": 45,
+          "total": 50,
+          "percent": 90.0
+        },
+        "relation_classification": {
+          "correct": 47,
+          "total": 50,
+          "percent": 94.0
+        },
+        "clarification_precision": {
+          "correct": 3,
+          "total": 5,
+          "percent": 60.0
+        },
+        "clarification_recall": {
+          "correct": 3,
+          "total": 3,
+          "percent": 100.0
+        },
+        "abstention_rate": {
+          "count": 5,
+          "total": 50,
+          "percent": 10.0
+        },
+        "cross_email_merging": {
+          "correct": 8,
+          "total": 8,
+          "percent": 100.0
+        },
+        "cross_email_full_record": {
+          "correct": 8,
+          "total": 8,
+          "percent": 100.0
+        }
+      },
+      "metrics_by_split": {
+        "development": {
+          "course_identification": {
+            "correct": 20,
+            "total": 20,
+            "percent": 100.0
+          },
+          "task_type_classification": {
+            "correct": 19,
+            "total": 20,
+            "percent": 95.0
+          },
+          "deadline_exact_on_deadline_cases": {
+            "correct": 17,
+            "total": 17,
+            "percent": 100.0
+          },
+          "false_deadlines_on_no_deadline_cases": {
+            "count": 0,
+            "total": 3
+          },
+          "urgency_classification": {
+            "correct": 20,
+            "total": 20,
+            "percent": 100.0
+          },
+          "urgency_confusion": {
+            "clarification->clarification": 2,
+            "high->high": 4,
+            "low->low": 7,
+            "medium->medium": 7
+          },
+          "high_priority_deadline_recall": {
+            "correct": 4,
+            "total": 4,
+            "percent": 100.0
+          },
+          "calendar_action": {
+            "correct": 20,
+            "total": 20,
+            "percent": 100.0
+          },
+          "relation_classification": {
+            "correct": 20,
+            "total": 20,
+            "percent": 100.0
+          },
+          "clarification_precision": {
+            "correct": 2,
+            "total": 2,
+            "percent": 100.0
+          },
+          "clarification_recall": {
+            "correct": 2,
+            "total": 2,
+            "percent": 100.0
+          },
+          "abstention_rate": {
+            "count": 2,
+            "total": 20,
+            "percent": 10.0
+          }
+        },
+        "test": {
+          "course_identification": {
+            "correct": 18,
+            "total": 18,
+            "percent": 100.0
+          },
+          "task_type_classification": {
+            "correct": 13,
+            "total": 18,
+            "percent": 72.2
+          },
+          "deadline_exact_on_deadline_cases": {
+            "correct": 12,
+            "total": 14,
+            "percent": 85.7
+          },
+          "false_deadlines_on_no_deadline_cases": {
+            "count": 0,
+            "total": 4
+          },
+          "urgency_classification": {
+            "correct": 16,
+            "total": 18,
+            "percent": 88.9
+          },
+          "urgency_confusion": {
+            "clarification->clarification": 1,
+            "high->clarification": 1,
+            "high->high": 2,
+            "low->clarification": 1,
+            "low->low": 12,
+            "medium->medium": 1
+          },
+          "high_priority_deadline_recall": {
+            "correct": 2,
+            "total": 3,
+            "percent": 66.7
+          },
+          "calendar_action": {
+            "correct": 16,
+            "total": 18,
+            "percent": 88.9
+          },
+          "relation_classification": {
+            "correct": 17,
+            "total": 18,
+            "percent": 94.4
+          },
+          "clarification_precision": {
+            "correct": 1,
+            "total": 3,
+            "percent": 33.3
+          },
+          "clarification_recall": {
+            "correct": 1,
+            "total": 1,
+            "percent": 100.0
+          },
+          "abstention_rate": {
+            "count": 3,
+            "total": 18,
+            "percent": 16.7
+          }
+        },
+        "synthetic_holdout": {
+          "course_identification": {
+            "correct": 12,
+            "total": 12,
+            "percent": 100.0
+          },
+          "task_type_classification": {
+            "correct": 11,
+            "total": 12,
+            "percent": 91.7
+          },
+          "deadline_exact_on_deadline_cases": {
+            "correct": 11,
+            "total": 12,
+            "percent": 91.7
+          },
+          "false_deadlines_on_no_deadline_cases": {
+            "count": 0,
+            "total": 0
+          },
+          "urgency_classification": {
+            "correct": 12,
+            "total": 12,
+            "percent": 100.0
+          },
+          "urgency_confusion": {
+            "low->low": 9,
+            "medium->medium": 3
+          },
+          "high_priority_deadline_recall": {
+            "correct": 0,
+            "total": 0,
+            "percent": null
+          },
+          "calendar_action": {
+            "correct": 9,
+            "total": 12,
+            "percent": 75.0
+          },
+          "relation_classification": {
+            "correct": 10,
+            "total": 12,
+            "percent": 83.3
+          },
+          "clarification_precision": {
+            "correct": 0,
+            "total": 0,
+            "percent": null
+          },
+          "clarification_recall": {
+            "correct": 0,
+            "total": 0,
+            "percent": null
+          },
+          "abstention_rate": {
+            "count": 0,
+            "total": 12,
+            "percent": 0.0
+          }
+        }
+      }
+    }
+  },
+  "merge_details": [
+    {
+      "thread_id": "c01",
+      "split": "development",
+      "merged_final_state_correct": true,
+      "full_record_correct": true,
+      "timeline_items_returned": 1,
+      "predicted_deadline": "2026-10-04T23:59:00+08:00",
+      "gold_draft_deadline": "2026-10-04T23:59:00+08:00",
+      "predicted_status": "active",
+      "gold_draft_status": "active"
+    },
+    {
+      "thread_id": "c02",
+      "split": "development",
+      "merged_final_state_correct": true,
+      "full_record_correct": true,
+      "timeline_items_returned": 1,
+      "predicted_deadline": "2026-10-02T10:00:00+08:00",
+      "gold_draft_deadline": "2026-10-02T10:00:00+08:00",
+      "predicted_status": "active",
+      "gold_draft_status": "active"
+    },
+    {
+      "thread_id": "c03",
+      "split": "development",
+      "merged_final_state_correct": true,
+      "full_record_correct": true,
+      "timeline_items_returned": 1,
+      "predicted_deadline": "2026-10-03T17:00:00+08:00",
+      "gold_draft_deadline": "2026-10-03T17:00:00+08:00",
+      "predicted_status": "active",
+      "gold_draft_status": "active"
+    },
+    {
+      "thread_id": "c04",
+      "split": "test",
+      "merged_final_state_correct": true,
+      "full_record_correct": true,
+      "timeline_items_returned": 1,
+      "predicted_deadline": null,
+      "gold_draft_deadline": null,
+      "predicted_status": "cancelled",
+      "gold_draft_status": "cancelled"
+    },
+    {
+      "thread_id": "c05",
+      "split": "test",
+      "merged_final_state_correct": true,
+      "full_record_correct": true,
+      "timeline_items_returned": 1,
+      "predicted_deadline": "2026-10-06T14:00:00+08:00",
+      "gold_draft_deadline": "2026-10-06T14:00:00+08:00",
+      "predicted_status": "active",
+      "gold_draft_status": "active"
+    },
+    {
+      "thread_id": "c06",
+      "split": "test",
+      "merged_final_state_correct": true,
+      "full_record_correct": true,
+      "timeline_items_returned": 1,
+      "predicted_deadline": "2026-10-07T23:59:00+08:00",
+      "gold_draft_deadline": "2026-10-07T23:59:00+08:00",
+      "predicted_status": "active",
+      "gold_draft_status": "active"
+    },
+    {
+      "thread_id": "c07",
+      "split": "synthetic_holdout",
+      "merged_final_state_correct": true,
+      "full_record_correct": true,
+      "timeline_items_returned": 1,
+      "predicted_deadline": "2026-10-08T10:00:00+08:00",
+      "gold_draft_deadline": "2026-10-08T10:00:00+08:00",
+      "predicted_status": "active",
+      "gold_draft_status": "active"
+    },
+    {
+      "thread_id": "c08",
+      "split": "synthetic_holdout",
+      "merged_final_state_correct": true,
+      "full_record_correct": true,
+      "timeline_items_returned": 1,
+      "predicted_deadline": "2026-10-12T17:00:00+08:00",
+      "gold_draft_deadline": "2026-10-12T17:00:00+08:00",
+      "predicted_status": "active",
+      "gold_draft_status": "active"
+    }
+  ]
+}

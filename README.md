@@ -22,6 +22,8 @@ The second working slice accepts a related email chain and returns one timeline 
 
 The default Demo mode is deterministic and requires no API key. Live model mode supports an OpenAI-compatible chat-completions endpoint through environment variables.
 
+The fourth app tab shows the latest provisional offline comparison against a simple keyword/date baseline. It is visibly marked as non-final while labels await human review.
+
 ## Run
 
 ```powershell
@@ -38,6 +40,7 @@ python -m app.smoke_test
 python -m pytest -q
 python 04_evaluation/merge_smoke_eval.py
 python 04_evaluation/safety_gate_eval.py
+python 04_evaluation/score_development.py
 ```
 
 ## Optional live model configuration
@@ -64,6 +67,7 @@ The current calendar adapter is a local in-memory demonstration. It proves the a
 - `schemas/`: machine-readable output contract.
 - `02_data/`: dataset inventory and later frozen evaluation cases.
 - `04_evaluation/`: evaluation plan and later scoring code.
+- `04_evaluation/PROVISIONAL_RESULTS.md`: current draft-label comparison and limitations.
 - `05_report/`: final trade-off analysis.
 - `06_demo/`: demo plan and recording assets.
 - `07_submission/`: final checklist.

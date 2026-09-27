@@ -17,7 +17,9 @@ from app.models import EmailInput, ExtractedTask
 PROMPT_VERSION = "v1.0"
 COURSE_PATTERN = re.compile(r"\b[A-Z]{2,4}\d{4}[A-Z]?\b")
 ACTION_PATTERN = re.compile(
-    r"\b(due|deadline|submit|submitted|upload|complete|exam|quiz|class|cancelled|canceled|extended|moved|reminder|workshop|briefing)\b",
+    r"\b(due|deadline|submit|submitted|upload|complete|post|send|bring|exam|quiz|"
+    r"meeting|class|cancelled|canceled|extended|moved|reminder|workshop|briefing|"
+    r"presentation|consultation|registration|survey)\b",
     re.IGNORECASE,
 )
 
@@ -39,19 +41,28 @@ def evidence_sentence(body: str) -> str:
             re.IGNORECASE,
         ):
             return sentence.strip()
+    for sentence in sentences:
+        cleaned = sentence.strip()
+        if cleaned and cleaned.lower() not in {"dear student,", "regards,", "course team"}:
+            return cleaned
     return ""
 
 
 def infer_task_type(subject: str, body: str) -> str:
     text = f"{subject} {body}".lower()
-    if any(word in text for word in ("assignment", "project", "report", "submission")):
-        return "assignment"
+    if any(word in text for word in ("workshop", "seminar", "class moved", "class cancelled", "room change", "has moved", "cancelled")):
+        return "class_change"
+    if any(word in text for word in ("registration", "form", "administrative", "survey", "declaration")):
+        return "administrative"
     if any(word in text for word in ("exam", "quiz", "test")):
         return "exam"
-    if any(word in text for word in ("class moved", "class cancelled", "room changed", "has moved", "cancelled")):
-        return "class_change"
-    if any(word in text for word in ("registration", "form", "administrative")):
-        return "administrative"
+    if any(word in text for word in ("consultation", "briefing", "meeting")):
+        return "other"
+    if any(word in text for word in (
+        "assignment", "project", "report", "submission", "reflection", "presentation",
+        "case response", "reading response", "draft", "case analysis",
+    )):
+        return "assignment"
     return "other"
 
 
@@ -66,6 +77,10 @@ def demo_extract(email: EmailInput, now=None) -> ExtractedTask:
 
     lowered = source_text.lower()
     is_cancel = any(term in lowered for term in ("cancelled", "canceled"))
+    informational = any(
+        term in lowered for term in ("optional", "no submission requirement", "resources are now available")
+    )
+    has_action = (deadline_iso is not None or bool(ACTION_PATTERN.search(source_text))) and not informational
     is_update = any(
         term in lowered
         for term in (
@@ -76,6 +91,11 @@ def demo_extract(email: EmailInput, now=None) -> ExtractedTask:
     relation = "cancel" if is_cancel else "update" if is_update else "new"
 
     if is_cancel:
+        deadline_iso = None
+        clarification = None
+        urgency = "low"
+        calendar_action = "do_not_create"
+    elif not has_action:
         deadline_iso = None
         clarification = None
         urgency = "low"

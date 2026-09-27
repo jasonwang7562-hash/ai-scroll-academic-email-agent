@@ -1,6 +1,6 @@
 # Gold Label Human Review Guide
 
-Open `gold_label_review.csv` in Excel and review each of the 50 rows before the final model run.
+Open the Streamlit app and select **Label review** to review each case beside its source email. Excel remains available as a fallback by opening `gold_label_review.csv` directly.
 
 ## What to check in each row
 
@@ -19,7 +19,8 @@ Open `gold_label_review.csv` in Excel and review each of the 50 rows before the 
 - Correct any field that is wrong.
 - Enter a short explanation in `reviewer_notes` when you change a label.
 - Change `review_status` from `pending_human_review` to `approved` only after checking the whole row.
-- Save the CSV using UTF-8 encoding.
+- In the app, select **Approve this label** after checking the complete case. Use **Save as pending** when a case still needs investigation.
+- If using Excel, save the CSV using UTF-8 encoding.
 
 When all rows are approved, run:
 
@@ -28,4 +29,3 @@ python 02_data/freeze_labels.py
 ```
 
 The command creates `gold_labels_frozen.jsonl` and a SHA256 checksum. Do not edit the frozen file after running the final evaluation.
-

@@ -8,6 +8,10 @@ import streamlit as st
 
 from app.calendar_gate import CalendarApprovalGate, CalendarPolicyError, InMemoryCalendarStore
 from app.extractor import extract
+from app.label_review import (
+    CALENDAR_ACTIONS, RELATIONS, TASK_TYPES, URGENCIES, load_jsonl, load_review_rows,
+    review_progress, save_review_row, validate_review,
+)
 from app.merge_engine import build_timeline
 from app.models import CalendarProposal, EmailInput, TimelineItem
 from app.sample_data import SAMPLE_BODY, SAMPLE_SENDER, SAMPLE_SUBJECT
@@ -110,8 +114,8 @@ with st.sidebar:
     st.markdown("**Urgency policy**")
     st.markdown("- High: within 72 hours\n- Medium: 4-7 days\n- Low: more than 7 days\n- Clarification: unsafe to infer")
 
-single_tab, chain_tab, safety_tab, evaluation_tab = st.tabs(
-    ["Single email", "Deadline update chain", "Safety and approval", "Evaluation"]
+single_tab, chain_tab, safety_tab, evaluation_tab, review_tab = st.tabs(
+    ["Single email", "Deadline update chain", "Safety and approval", "Evaluation", "Label review"]
 )
 
 with single_tab:
@@ -259,3 +263,84 @@ with evaluation_tab:
         with st.expander("Why these results are not final"):
             for limitation in evaluation["limitations"]:
                 st.markdown(f"- {limitation}")
+
+with review_tab:
+    st.subheader("Human review before the final model run")
+    st.caption("Review the source email and every label. Approval changes only the local review CSV.")
+    review_path = ROOT / "02_data" / "gold_label_review.csv"
+    email_path = ROOT / "02_data" / "evaluation_emails.jsonl"
+    review_rows = load_review_rows(review_path)
+    email_rows = {row["email_id"]: row for row in load_jsonl(email_path)}
+    progress = review_progress(review_rows)
+    st.progress(progress["approved"] / progress["total"], text=f"{progress['approved']} of {progress['total']} labels approved")
+
+    selected_id = st.selectbox(
+        "Case to review",
+        [row["email_id"] for row in review_rows],
+        format_func=lambda email_id: (
+            f"{email_id} · {email_rows[email_id]['subject']} · "
+            f"{next(row['review_status'] for row in review_rows if row['email_id'] == email_id)}"
+        ),
+    )
+    review_row = next(row for row in review_rows if row["email_id"] == selected_id)
+    source_email = email_rows[selected_id]
+    st.markdown(f"**Subject:** {source_email['subject']}  \n**Sender:** {source_email['sender']}  \n**Split:** {source_email['split']}")
+    st.code(source_email["body"], language=None)
+
+    with st.form(f"review_{selected_id}"):
+        left, right = st.columns(2)
+        with left:
+            course_gold = st.text_input("Course", value=review_row["course_gold"])
+            task_type_gold = st.selectbox("Task type", TASK_TYPES, index=TASK_TYPES.index(review_row["task_type_gold"]))
+            task_title_gold = st.text_input("Task title", value=review_row["task_title_gold"])
+            deadline_gold = st.text_input("Deadline (ISO; blank if none)", value=review_row["deadline_gold"])
+            timezone_gold = st.text_input("Timezone", value=review_row["timezone_gold"])
+            urgency_gold = st.selectbox("Urgency", URGENCIES, index=URGENCIES.index(review_row["urgency_gold"]))
+        with right:
+            relation_gold = st.selectbox("Relation", RELATIONS, index=RELATIONS.index(review_row["relation_gold"]))
+            calendar_action_gold = st.selectbox(
+                "Calendar action", CALENDAR_ACTIONS,
+                index=CALENDAR_ACTIONS.index(review_row["calendar_action_gold"]),
+            )
+            needs_clarification_gold = st.checkbox(
+                "Needs clarification", value=review_row["needs_clarification_gold"].lower() == "true"
+            )
+            clarification_reason_gold = st.text_input(
+                "Clarification reason", value=review_row["clarification_reason_gold"]
+            )
+            evidence_gold = st.text_area("Exact evidence quote", value=review_row["evidence_gold"], height=120)
+            reviewer_notes = st.text_input("Reviewer notes", value=review_row["reviewer_notes"])
+        save_draft = st.form_submit_button("Save as pending")
+        approve_label = st.form_submit_button("Approve this label", type="primary")
+
+    if save_draft or approve_label:
+        updates = {
+            "course_gold": course_gold,
+            "task_type_gold": task_type_gold,
+            "task_title_gold": task_title_gold,
+            "deadline_gold": deadline_gold,
+            "timezone_gold": timezone_gold,
+            "urgency_gold": urgency_gold,
+            "evidence_gold": evidence_gold,
+            "relation_gold": relation_gold,
+            "calendar_action_gold": calendar_action_gold,
+            "needs_clarification_gold": needs_clarification_gold,
+            "clarification_reason_gold": clarification_reason_gold,
+            "reviewer_notes": reviewer_notes,
+        }
+        candidate = {**review_row, **{key: str(value) for key, value in updates.items()}}
+        candidate["needs_clarification_gold"] = str(needs_clarification_gold)
+        errors = validate_review(candidate, source_email)
+        if errors:
+            for error in errors:
+                st.error(error)
+        else:
+            save_review_row(review_path, selected_id, updates, approve=approve_label)
+            st.success("Label approved." if approve_label else "Draft saved and left pending.")
+            st.rerun()
+
+    if progress["pending"] == 0:
+        st.success("All 50 labels are approved. The label set is ready to freeze.")
+        st.code("python 02_data/freeze_labels.py", language="powershell")
+    else:
+        st.info(f"{progress['pending']} labels still need review before freezing.")

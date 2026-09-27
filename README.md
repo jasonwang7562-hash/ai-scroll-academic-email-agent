@@ -24,6 +24,8 @@ The default Demo mode is deterministic and requires no API key. Live model mode 
 
 The fourth app tab shows the latest provisional offline comparison against a simple keyword/date baseline. It is visibly marked as non-final while labels await human review.
 
+The **Label review** tab is the required next step before a formal model run. It presents each source email beside its draft labels, validates evidence and safe clarification rules, and writes approvals to the local review CSV. The freeze script remains blocked until all 50 cases are approved.
+
 ## Run
 
 ```powershell
@@ -41,6 +43,7 @@ python -m pytest -q
 python 04_evaluation/merge_smoke_eval.py
 python 04_evaluation/safety_gate_eval.py
 python 04_evaluation/score_development.py
+python 02_data/freeze_labels.py
 ```
 
 ## Optional live model configuration

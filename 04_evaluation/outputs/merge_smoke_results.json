@@ -1,0 +1,112 @@
+{
+  "evaluation_type": "development_smoke_test",
+  "warning": "Draft labels are pending human review. These are not final report metrics.",
+  "threads_checked": 8,
+  "threads_passed": 8,
+  "results": [
+    {
+      "thread_id": "c01",
+      "source_email_count": 2,
+      "timeline_item_count": 1,
+      "expected_deadline": "2026-10-04T23:59:00+08:00",
+      "actual_deadline": "2026-10-04T23:59:00+08:00",
+      "expected_status": "active",
+      "actual_status": "active",
+      "expected_calendar_action": "update",
+      "actual_calendar_action": "update",
+      "passed": true,
+      "label_status": "pending_human_review"
+    },
+    {
+      "thread_id": "c02",
+      "source_email_count": 2,
+      "timeline_item_count": 1,
+      "expected_deadline": "2026-10-02T10:00:00+08:00",
+      "actual_deadline": "2026-10-02T10:00:00+08:00",
+      "expected_status": "active",
+      "actual_status": "active",
+      "expected_calendar_action": "update",
+      "actual_calendar_action": "update",
+      "passed": true,
+      "label_status": "pending_human_review"
+    },
+    {
+      "thread_id": "c03",
+      "source_email_count": 2,
+      "timeline_item_count": 1,
+      "expected_deadline": "2026-10-03T17:00:00+08:00",
+      "actual_deadline": "2026-10-03T17:00:00+08:00",
+      "expected_status": "active",
+      "actual_status": "active",
+      "expected_calendar_action": "update",
+      "actual_calendar_action": "update",
+      "passed": true,
+      "label_status": "pending_human_review"
+    },
+    {
+      "thread_id": "c04",
+      "source_email_count": 2,
+      "timeline_item_count": 1,
+      "expected_deadline": null,
+      "actual_deadline": null,
+      "expected_status": "cancelled",
+      "actual_status": "cancelled",
+      "expected_calendar_action": "do_not_create",
+      "actual_calendar_action": "do_not_create",
+      "passed": true,
+      "label_status": "pending_human_review"
+    },
+    {
+      "thread_id": "c05",
+      "source_email_count": 3,
+      "timeline_item_count": 1,
+      "expected_deadline": "2026-10-06T14:00:00+08:00",
+      "actual_deadline": "2026-10-06T14:00:00+08:00",
+      "expected_status": "active",
+      "actual_status": "active",
+      "expected_calendar_action": "update",
+      "actual_calendar_action": "update",
+      "passed": true,
+      "label_status": "pending_human_review"
+    },
+    {
+      "thread_id": "c06",
+      "source_email_count": 3,
+      "timeline_item_count": 1,
+      "expected_deadline": "2026-10-07T23:59:00+08:00",
+      "actual_deadline": "2026-10-07T23:59:00+08:00",
+      "expected_status": "active",
+      "actual_status": "active",
+      "expected_calendar_action": "update",
+      "actual_calendar_action": "update",
+      "passed": true,
+      "label_status": "pending_human_review"
+    },
+    {
+      "thread_id": "c07",
+      "source_email_count": 3,
+      "timeline_item_count": 1,
+      "expected_deadline": "2026-10-08T10:00:00+08:00",
+      "actual_deadline": "2026-10-08T10:00:00+08:00",
+      "expected_status": "active",
+      "actual_status": "active",
+      "expected_calendar_action": "update",
+      "actual_calendar_action": "update",
+      "passed": true,
+      "label_status": "pending_human_review"
+    },
+    {
+      "thread_id": "c08",
+      "source_email_count": 3,
+      "timeline_item_count": 1,
+      "expected_deadline": "2026-10-12T17:00:00+08:00",
+      "actual_deadline": "2026-10-12T17:00:00+08:00",
+      "expected_status": "active",
+      "actual_status": "active",
+      "expected_calendar_action": "update",
+      "actual_calendar_action": "update",
+      "passed": true,
+      "label_status": "pending_human_review"
+    }
+  ]
+}

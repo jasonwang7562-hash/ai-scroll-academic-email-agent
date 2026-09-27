@@ -37,6 +37,7 @@ Open the local URL printed by Streamlit, keep the included sample email, and sel
 python -m app.smoke_test
 python -m pytest -q
 python 04_evaluation/merge_smoke_eval.py
+python 04_evaluation/safety_gate_eval.py
 ```
 
 ## Optional live model configuration
@@ -51,6 +52,10 @@ python -m streamlit run app/main.py
 ```
 
 The first assessed run should record the exact model ID and provider price date. Prices are deliberately not hard-coded.
+
+## Calendar safety
+
+The current calendar adapter is a local in-memory demonstration. It proves the approval gate and deduplication logic without modifying an external account. Ambiguous, cancelled, expired and unconfirmed actions are blocked before the adapter is called. A later Google Calendar adapter must use the same gate.
 
 ## Repository map
 

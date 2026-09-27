@@ -1,0 +1,47 @@
+{
+  "evaluation_type": "development_safety_gate_test",
+  "warning": "This uses an in-memory adapter. Google Calendar integration is a later milestone.",
+  "unconfirmed_attempts": 1,
+  "unconfirmed_attempts_blocked": 1,
+  "unauthorized_writes": 0,
+  "authorized_writes": 1,
+  "duplicate_attempts": 1,
+  "duplicates_prevented": 1,
+  "unsafe_cases_checked": 2,
+  "unsafe_cases_blocked": 2,
+  "stored_event_count": 1,
+  "audit": [
+    {
+      "action": "preview",
+      "status": "prepared",
+      "proposal_id": "229c718edf970d2f"
+    },
+    {
+      "action": "write",
+      "status": "blocked_unconfirmed",
+      "proposal_id": "229c718edf970d2f"
+    },
+    {
+      "action": "write",
+      "status": "committed",
+      "proposal_id": "229c718edf970d2f",
+      "event_id": "demo_event_001"
+    },
+    {
+      "action": "write",
+      "status": "deduplicated",
+      "proposal_id": "229c718edf970d2f",
+      "event_id": "demo_event_001"
+    },
+    {
+      "action": "preview",
+      "status": "blocked_unsafe",
+      "reason": "No explicit calendar date was found."
+    },
+    {
+      "action": "preview",
+      "status": "blocked_unsafe",
+      "reason": "Cancelled tasks cannot create or update a calendar event."
+    }
+  ]
+}

@@ -25,8 +25,10 @@ Keep the AI Scroll topic. The instructor's feedback supports the core idea and s
 - Dataset structure, evidence integrity and thread counts pass automated validation. All draft labels remain pending Jason's human review before freezing.
 - A cross-email matcher and merge engine now handle deadline extensions, reminders, metadata changes and cancellations while retaining an evidence and change audit trail.
 - The eight synthetic multi-email chains pass the development smoke test. This is not a final metric because the draft labels still require human approval.
+- The deterministic urgency policy, clarification handling, approval gate and event deduplication are implemented and covered by automated tests.
+- The development safety test reports zero unauthorized writes using the local in-memory calendar adapter. External Google Calendar integration is still outstanding.
 - The completed model evaluation, remote GitHub repository, final report and final demo are still outstanding.
 
 ## Next milestone
 
-Review and freeze the 50 draft labels, then add deterministic urgency, abstention and the explicit calendar approval gate.
+Review and freeze the 50 draft labels, then implement the rule baseline and run the first full extraction evaluation.

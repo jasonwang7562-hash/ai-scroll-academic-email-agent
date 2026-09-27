@@ -56,11 +56,21 @@ class ExtractedTask(BaseModel):
 
 
 class CalendarProposal(BaseModel):
+    proposal_id: str = ""
+    source_thread_id: str = ""
     title: str
     start: str
     timezone: str
     description: str
+    action: Literal["create", "update"] = "create"
     committed: bool = False
+
+
+class CalendarWriteResult(BaseModel):
+    event_id: str
+    proposal_id: str
+    status: Literal["committed", "deduplicated"]
+    external_write: bool = False
 
 
 class EvidenceRecord(BaseModel):
@@ -94,4 +104,3 @@ class TimelineItem(BaseModel):
     source_email_ids: list[str]
     evidence_history: list[EvidenceRecord]
     change_history: list[ChangeRecord]
-

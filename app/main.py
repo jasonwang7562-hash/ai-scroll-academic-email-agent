@@ -6,6 +6,7 @@ from pathlib import Path
 
 import streamlit as st
 
+from app.calendar_gate import CalendarApprovalGate, CalendarPolicyError, InMemoryCalendarStore
 from app.extractor import extract
 from app.merge_engine import build_timeline
 from app.models import CalendarProposal, EmailInput, TimelineItem
@@ -109,7 +110,7 @@ with st.sidebar:
     st.markdown("**Urgency policy**")
     st.markdown("- High: within 72 hours\n- Medium: 4-7 days\n- Low: more than 7 days\n- Clarification: unsafe to infer")
 
-single_tab, chain_tab = st.tabs(["Single email", "Deadline update chain"])
+single_tab, chain_tab, safety_tab = st.tabs(["Single email", "Deadline update chain", "Safety and approval"])
 
 with single_tab:
     left, right = st.columns([1.08, 0.92], gap="large")
@@ -149,3 +150,71 @@ with chain_tab:
         st.subheader("Merged timeline")
         for item in timeline:
             show_timeline_item(item)
+
+with safety_tab:
+    st.subheader("Calendar safety gate")
+    st.caption("Choose a case, inspect the decision, then explicitly confirm an eligible preview.")
+    scenario = st.selectbox(
+        "Safety scenario",
+        ["Eligible deadline", "Ambiguous next Friday", "Cancelled workshop"],
+    )
+    if scenario == "Eligible deadline":
+        safety_emails = [EmailInput(
+            subject=SAMPLE_SUBJECT, sender=SAMPLE_SENDER, body=SAMPLE_BODY,
+            sent_at="2026-09-26T09:00:00+08:00",
+        )]
+    elif scenario == "Ambiguous next Friday":
+        safety_emails = [EmailInput(
+            subject="PE6201 consultation",
+            body="Please attend the PE6201 consultation next Friday.",
+            sent_at="2026-09-26T09:00:00+08:00",
+        )]
+    else:
+        safety_emails = [
+            EmailInput(
+                subject="PE6201 workshop",
+                body="The PE6201 workshop is on 3 October 2026 at 10:00 AM SGT.",
+                sent_at="2026-09-20T09:00:00+08:00",
+            ),
+            EmailInput(
+                subject="PE6201 workshop cancelled",
+                body="The PE6201 workshop on 3 October 2026 has been cancelled.",
+                sent_at="2026-09-26T09:00:00+08:00",
+            ),
+        ]
+
+    safety_item = build_timeline(safety_emails)[0]
+    st.session_state.setdefault("calendar_events", {})
+    st.session_state.setdefault("calendar_audit", [])
+    store = InMemoryCalendarStore(st.session_state["calendar_events"])
+    gate = CalendarApprovalGate(store=store, audit=st.session_state["calendar_audit"])
+
+    try:
+        proposal = gate.preview(safety_item)
+        deadline = datetime.fromisoformat(proposal.start)
+        st.success("Safety checks passed. A preview can be prepared.")
+        st.markdown(
+            f'<div class="result-card"><b>{proposal.title}</b><br>{deadline.strftime("%d %B %Y, %I:%M %p")} ({proposal.timezone})<br><small>Proposal ID: {proposal.proposal_id}</small></div>',
+            unsafe_allow_html=True,
+        )
+        st.info("The next button is the explicit approval step. Review the course, task, deadline and evidence before selecting it.")
+        if st.button(
+            "Confirm reviewed event and add to simulated calendar",
+            type="primary",
+            use_container_width=True,
+        ):
+            result = gate.commit(proposal, user_confirmed=True)
+            st.session_state["last_calendar_result"] = result.model_dump()
+        last_result = st.session_state.get("last_calendar_result")
+        if last_result and last_result["proposal_id"] == proposal.proposal_id:
+            if last_result["status"] == "committed":
+                st.success(f"Approved event recorded as {last_result['event_id']}.")
+            else:
+                st.info(f"Duplicate prevented. Existing event: {last_result['event_id']}.")
+            st.caption("This demonstration uses a local in-memory adapter. No external calendar was changed.")
+    except CalendarPolicyError as exc:
+        st.warning(f"Calendar action blocked: {exc}")
+        st.caption("The user must clarify or resolve the source email before a new preview can be created.")
+
+    with st.expander("View safety audit"):
+        st.json(st.session_state["calendar_audit"][-10:])

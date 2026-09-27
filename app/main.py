@@ -19,8 +19,9 @@ st.markdown(
     <style>
     .block-container {max-width: 1160px; padding-top: 2rem;}
     .eyebrow {color:#256c5a; font-weight:700; letter-spacing:.08em; font-size:.78rem;}
-    .result-card {border:1px solid #dce7e2; border-radius:14px; padding:18px; background:#f8fbfa; margin-bottom:12px;}
-    .evidence {border-left:5px solid #287a64; background:#eef7f3; padding:14px 16px; border-radius:7px;}
+    .result-card {border:1px solid #dce7e2; border-radius:14px; padding:18px; background:#f8fbfa; color:#15211d; margin-bottom:12px;}
+    .result-card small {color:#52635d;}
+    .evidence {border-left:5px solid #287a64; background:#eef7f3; color:#15211d; padding:14px 16px; border-radius:7px;}
     .before {color:#8b3a3a; text-decoration:line-through;}
     .after {color:#176b52; font-weight:700;}
     </style>
@@ -148,4 +149,3 @@ with chain_tab:
         st.subheader("Merged timeline")
         for item in timeline:
             show_timeline_item(item)
-

@@ -13,6 +13,13 @@ This first working slice accepts one email and returns:
 - an exact evidence quote;
 - a calendar preview that is not written anywhere.
 
+The second working slice accepts a related email chain and returns one timeline item with:
+
+- later deadline corrections applied;
+- reminders deduplicated;
+- cancellations blocking calendar action;
+- complete evidence and field-level change history.
+
 The default Demo mode is deterministic and requires no API key. Live model mode supports an OpenAI-compatible chat-completions endpoint through environment variables.
 
 ## Run
@@ -29,6 +36,7 @@ Open the local URL printed by Streamlit, keep the included sample email, and sel
 ```powershell
 python -m app.smoke_test
 python -m pytest -q
+python 04_evaluation/merge_smoke_eval.py
 ```
 
 ## Optional live model configuration
@@ -58,4 +66,3 @@ The first assessed run should record the exact model ID and provider price date.
 ## Privacy
 
 Use anonymized or synthetic emails in the public repository. `.env`, private emails and call logs are excluded from Git.
-

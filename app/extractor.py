@@ -16,7 +16,10 @@ from app.models import EmailInput, ExtractedTask
 
 PROMPT_VERSION = "v1.0"
 COURSE_PATTERN = re.compile(r"\b[A-Z]{2,4}\d{4}[A-Z]?\b")
-ACTION_PATTERN = re.compile(r"\b(due|deadline|submit|submitted|upload|complete|exam|quiz|class)\b", re.IGNORECASE)
+ACTION_PATTERN = re.compile(
+    r"\b(due|deadline|submit|submitted|upload|complete|exam|quiz|class|cancelled|canceled|extended|moved|reminder|workshop|briefing)\b",
+    re.IGNORECASE,
+)
 
 
 def stable_id(prefix: str, value: str) -> str:
@@ -29,6 +32,13 @@ def evidence_sentence(body: str) -> str:
     for sentence in sentences:
         if ACTION_PATTERN.search(sentence) and re.search(r"\d", sentence):
             return sentence.strip()
+    for sentence in sentences:
+        if re.search(r"\d", sentence) and re.search(
+            r"\b(January|February|March|April|May|June|July|August|September|October|November|December)\b",
+            sentence,
+            re.IGNORECASE,
+        ):
+            return sentence.strip()
     return ""
 
 
@@ -38,7 +48,7 @@ def infer_task_type(subject: str, body: str) -> str:
         return "assignment"
     if any(word in text for word in ("exam", "quiz", "test")):
         return "exam"
-    if any(word in text for word in ("class moved", "class cancelled", "room changed")):
+    if any(word in text for word in ("class moved", "class cancelled", "room changed", "has moved", "cancelled")):
         return "class_change"
     if any(word in text for word in ("registration", "form", "administrative")):
         return "administrative"
@@ -54,12 +64,28 @@ def demo_extract(email: EmailInput, now=None) -> ExtractedTask:
     email_id = stable_id("email", f"{email.subject}|{email.sender}|{email.body}")
     thread_id = stable_id("thread", f"{course}|{email.subject.lower()}")
 
-    if clarification:
+    lowered = source_text.lower()
+    is_cancel = any(term in lowered for term in ("cancelled", "canceled"))
+    is_update = any(
+        term in lowered
+        for term in (
+            "extended", "moved", "instead of", "corrected", "remains",
+            "reminder:", "no longer applies", "must now include",
+        )
+    )
+    relation = "cancel" if is_cancel else "update" if is_update else "new"
+
+    if is_cancel:
+        deadline_iso = None
+        clarification = None
+        urgency = "low"
+        calendar_action = "do_not_create"
+    elif clarification:
         urgency = "clarification"
         calendar_action = "ask_clarification"
     else:
         urgency = urgency_for(deadline_iso, source_text, now=now)
-        calendar_action = "create"
+        calendar_action = "update" if is_update else "create"
 
     title = re.sub(COURSE_PATTERN, "", email.subject).strip(" -:|") or "Academic task"
     return ExtractedTask(
@@ -72,7 +98,7 @@ def demo_extract(email: EmailInput, now=None) -> ExtractedTask:
         timezone="Asia/Singapore",
         urgency=urgency,
         evidence_quote=evidence,
-        relation_to_previous="new",
+        relation_to_previous=relation,
         calendar_action=calendar_action,
         needs_clarification=bool(clarification),
         clarification_reason=clarification,
@@ -171,4 +197,3 @@ def extract(email: EmailInput, mode: str = "Demo", now=None) -> ExtractedTask:
     root = Path(__file__).resolve().parents[1]
     log_call(mode, task, usage, root / "logs" / "model_calls.csv")
     return task
-

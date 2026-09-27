@@ -23,8 +23,10 @@ Keep the AI Scroll topic. The instructor's feedback supports the core idea and s
 - A local Git repository was initialized on 26 September 2026 at commit `3c524c6`.
 - A reproducible draft dataset now contains 50 synthetic emails across 38 threads: 30 independent emails and eight multi-email chains containing 20 emails.
 - Dataset structure, evidence integrity and thread counts pass automated validation. All draft labels remain pending Jason's human review before freezing.
+- A cross-email matcher and merge engine now handle deadline extensions, reminders, metadata changes and cancellations while retaining an evidence and change audit trail.
+- The eight synthetic multi-email chains pass the development smoke test. This is not a final metric because the draft labels still require human approval.
 - The completed model evaluation, remote GitHub repository, final report and final demo are still outstanding.
 
 ## Next milestone
 
-Review and freeze the 50 draft labels, then implement cross-email matching and update merging without changing the Version 1 extraction contract.
+Review and freeze the 50 draft labels, then add deterministic urgency, abstention and the explicit calendar approval gate.

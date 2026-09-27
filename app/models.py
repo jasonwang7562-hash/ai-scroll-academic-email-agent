@@ -18,6 +18,7 @@ class EmailInput(BaseModel):
     subject: str = Field(min_length=1)
     sender: str = ""
     body: str = Field(min_length=1)
+    sent_at: str | None = None
 
 
 class ExtractedTask(BaseModel):
@@ -60,4 +61,37 @@ class CalendarProposal(BaseModel):
     timezone: str
     description: str
     committed: bool = False
+
+
+class EvidenceRecord(BaseModel):
+    email_id: str
+    source_subject: str
+    evidence_quote: str
+    deadline_iso: str | None
+    relation: Relation
+
+
+class ChangeRecord(BaseModel):
+    source_email_id: str
+    field: str
+    previous_value: str | None
+    new_value: str | None
+    reason: str
+
+
+class TimelineItem(BaseModel):
+    thread_id: str
+    course: str
+    task_type: TaskType
+    task_title: str
+    deadline_iso: str | None
+    timezone: str
+    urgency: Urgency
+    status: Literal["active", "cancelled", "clarification"]
+    calendar_action: CalendarAction
+    needs_clarification: bool
+    clarification_reason: str | None
+    source_email_ids: list[str]
+    evidence_history: list[EvidenceRecord]
+    change_history: list[ChangeRecord]
 

@@ -77,6 +77,7 @@ The current calendar adapter is a local in-memory demonstration. It proves the a
 - `04_evaluation/`: evaluation plan and later scoring code.
 - `04_evaluation/PROVISIONAL_RESULTS.md`: current draft-label comparison and limitations.
 - `05_report/`: final trade-off analysis.
+- `05_report/AI_Scroll_Trade_Off_Analysis_Draft.docx`: editable 1,024-word report draft with provisional evidence clearly marked.
 - `06_demo/`: demo plan and recording assets.
 - `07_submission/`: final checklist.
 

@@ -31,6 +31,7 @@ Keep the AI Scroll topic. The instructor's feedback supports the core idea and s
 - The Streamlit app now includes a human label-review workflow. It shows the source email, validates edited fields and verbatim evidence, tracks approval progress, and keeps the freeze command blocked until all 50 labels are explicitly approved.
 - A gated final-evaluation runner now performs a safe preflight by default and refuses live calls until frozen labels, checksum and model configuration are present. Its execution mode preserves per-case outputs plus token and latency usage.
 - A cost pipeline now compares on-demand, naive hourly, naive 15-minute and event-filtered polling. It currently reports `PENDING` rather than inventing a cost because live token usage and dated provider prices are not yet available.
+- A visually verified three-page Word draft of the Business and Technical Trade Off Analysis now covers the problem, hybrid architecture, build-versus-buy decision, dataset counts, provisional component metrics, cost design, safety controls and limitations in 1,024 words. Final model and measured cost values remain explicitly pending.
 - The live-model evaluation, token and cost analysis, independent real-email test set, remote GitHub repository, final report and final demo are still outstanding.
 
 ## Next milestone

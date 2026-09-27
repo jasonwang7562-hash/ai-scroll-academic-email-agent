@@ -6,4 +6,4 @@ __pycache__/
 .streamlit/secrets.toml
 logs/*.csv
 data/private/
-
+05_report/_qa_render/

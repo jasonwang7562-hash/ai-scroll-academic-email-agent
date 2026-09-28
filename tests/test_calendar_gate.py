@@ -72,3 +72,20 @@ def test_cancelled_item_cannot_create_event():
     with pytest.raises(CalendarPolicyError):
         gate.preview(item, now=NOW)
 
+
+def test_identical_preview_reruns_do_not_duplicate_audit_rows():
+    gate = CalendarApprovalGate()
+    item = active_item()
+    proposal = gate.preview(item, now=NOW)
+    gate.commit(proposal, user_confirmed=True)
+    gate.preview(item, now=NOW)
+    assert gate.audit == [{
+        "action": "preview",
+        "status": "prepared",
+        "proposal_id": proposal.proposal_id,
+    }, {
+        "action": "write",
+        "status": "committed",
+        "proposal_id": proposal.proposal_id,
+        "event_id": "demo_event_001",
+    }]

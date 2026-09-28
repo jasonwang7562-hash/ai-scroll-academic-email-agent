@@ -35,6 +35,7 @@ Keep the AI Scroll topic. The instructor's feedback supports the core idea and s
 - A competitor-informed UI revision now combines a proactive status brief, three-column academic inbox, evidence cards, timeline update view and explicit calendar-review flow. The design decisions are recorded in `docs/COMPETITOR_UI_DECISIONS.md`; extraction and safety behavior remain unchanged.
 - A second competitor study added a daily focus banner, academic work-queue filters, source context, a visible capture-to-approval route and an explanatory merge flow. The adopted and rejected patterns are recorded in `docs/COMPETITOR_UI_ROUND_2.md`.
 - A third competitor study strengthened trust and reviewability with a dynamic processing route, a human-readable decision statement, a four-check validation panel, scenario-specific calendar policy cards and a readable safety audit. The rationale is recorded in `docs/COMPETITOR_UI_ROUND_3.md`.
+- Calendar review now places the exact source evidence before approval, explains the simulated write and retry protection, and suppresses duplicate audit rows caused by Streamlit reruns.
 - The live-model evaluation, token and cost analysis, independent real-email test set, remote GitHub repository, final report and final demo are still outstanding.
 
 ## Next milestone

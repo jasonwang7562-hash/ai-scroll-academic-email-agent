@@ -111,6 +111,11 @@ st.markdown(
     .audit-line:last-child {border-bottom:0;}
     .audit-action {font-weight:800; color:var(--ink); text-transform:capitalize;}
     .audit-status {color:#5267e8; font-weight:750;}
+    .approval-summary {display:grid; grid-template-columns:1fr 1fr; gap:9px; margin:11px 0 13px;}
+    .approval-item {border:1px solid #dfe4ee; border-radius:12px; padding:11px 12px; background:#fbfcfe;}
+    .approval-item span {display:block; color:#8790a5; font-size:.64rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; margin-bottom:5px;}
+    .approval-item b {display:block; color:var(--ink); font-size:.8rem; margin-bottom:3px;}
+    .approval-item small {display:block; color:var(--muted); font-size:.7rem; line-height:1.35;}
     .chain-flow {display:grid; grid-template-columns:1fr 24px 1fr 24px 1fr; align-items:center; gap:7px; margin:12px 0 19px;}
     .flow-card {border:1px solid var(--line); border-radius:13px; background:white; padding:12px; min-height:72px;}
     .flow-card b {display:block; color:var(--ink); font-size:.82rem; margin-bottom:4px;}
@@ -132,6 +137,7 @@ st.markdown(
       .brief-banner{align-items:flex-start;flex-direction:column}
       .route{grid-template-columns:repeat(2,1fr)}
       .policy-grid{grid-template-columns:1fr}
+      .approval-summary{grid-template-columns:1fr}
       .chain-flow{grid-template-columns:1fr}
       .flow-arrow{transform:rotate(90deg)}
       [data-testid="stHorizontalBlock"]{flex-wrap:wrap !important;}
@@ -400,7 +406,20 @@ with safety_tab:
             f'<div class="result-card"><b>{proposal.title}</b><br>{deadline.strftime("%d %B %Y, %I:%M %p")} ({proposal.timezone})<br><small>Proposal ID: {proposal.proposal_id}</small></div>',
             unsafe_allow_html=True,
         )
-        st.info("The next button is the explicit approval step. Review the course, task, deadline and evidence before selecting it.")
+        approval_evidence = safety_item.evidence_history[-1]
+        st.markdown('<div class="section-label">Evidence to approve</div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="evidence">“{approval_evidence.evidence_quote}”<br><small>Source: {approval_evidence.source_subject}</small></div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            '<div class="approval-summary">'
+            '<div class="approval-item"><span>On confirmation</span><b>Record one simulated event</b><small>The local demo adapter receives this reviewed proposal.</small></div>'
+            '<div class="approval-item"><span>Retry protection</span><b>Duplicate writes are prevented</b><small>The proposal fingerprint maps repeated approval to the existing event.</small></div>'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+        st.info("The next button is the explicit approval step. No external calendar is connected in this demonstration.")
         if st.button(
             "Confirm reviewed event and add to simulated calendar",
             type="primary",
@@ -417,6 +436,13 @@ with safety_tab:
             st.caption("This demonstration uses a local in-memory adapter. No external calendar was changed.")
     except CalendarPolicyError as exc:
         st.warning(f"Calendar action blocked: {exc}")
+        if safety_item.evidence_history:
+            blocking_evidence = safety_item.evidence_history[-1]
+            st.markdown('<div class="section-label">Evidence that triggered the block</div>', unsafe_allow_html=True)
+            st.markdown(
+                f'<div class="evidence">“{blocking_evidence.evidence_quote}”<br><small>Source: {blocking_evidence.source_subject}</small></div>',
+                unsafe_allow_html=True,
+            )
         st.caption("The user must clarify or resolve the source email before a new preview can be created.")
 
     with st.expander("View safety audit"):

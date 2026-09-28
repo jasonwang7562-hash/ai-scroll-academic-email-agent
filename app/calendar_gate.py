@@ -46,7 +46,7 @@ class CalendarApprovalGate:
     def preview(self, item: TimelineItem, now: datetime | None = None) -> CalendarProposal:
         reason = self._blocked_reason(item, now=now)
         if reason:
-            self.audit.append({"action": "preview", "status": "blocked_unsafe", "reason": reason})
+            self._append_audit_once({"action": "preview", "status": "blocked_unsafe", "reason": reason})
             raise CalendarPolicyError(reason)
 
         evidence = "\n".join(
@@ -66,7 +66,7 @@ class CalendarApprovalGate:
             description=f"AI Scroll evidence:\n{evidence}",
             action="update" if item.calendar_action == "update" else "create",
         )
-        self.audit.append({"action": "preview", "status": "prepared", "proposal_id": proposal_id})
+        self._append_audit_once({"action": "preview", "status": "prepared", "proposal_id": proposal_id})
         return proposal
 
     def commit(self, proposal: CalendarProposal, *, user_confirmed: bool) -> CalendarWriteResult:
@@ -81,6 +81,11 @@ class CalendarApprovalGate:
             "proposal_id": proposal.proposal_id, "event_id": result.event_id,
         })
         return result
+
+    def _append_audit_once(self, entry: dict) -> None:
+        """Avoid repeated audit rows caused by harmless Streamlit reruns."""
+        if entry not in self.audit:
+            self.audit.append(entry)
 
     @staticmethod
     def _blocked_reason(item: TimelineItem, now: datetime | None = None) -> str | None:
@@ -98,4 +103,3 @@ class CalendarApprovalGate:
             if deadline <= comparison_now:
                 return "The deadline is already in the past."
         return None
-

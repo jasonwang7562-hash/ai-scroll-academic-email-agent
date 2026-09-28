@@ -26,6 +26,8 @@ Round one established a polished inbox workspace. Round two clarified queues and
 4. The interface does not display an invented confidence percentage. Trust is based on inspectable checks and evidence.
 5. Calendar review now shows Source, Policy and External effect before the action button.
 6. The safety audit has a readable activity view while retaining raw JSON for technical inspection.
+7. The exact source quote is repeated beside the approval control so the user does not need to remember evidence from another tab.
+8. Two compact cards explain what confirmation does and how retry deduplication works; repeated Streamlit reruns no longer add identical preview rows to the audit.
 
 ## Scope control
 

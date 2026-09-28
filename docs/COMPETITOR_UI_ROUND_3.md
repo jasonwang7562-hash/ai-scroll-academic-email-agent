@@ -2,6 +2,8 @@
 
 Reviewed 28 September 2026 against the official product and help pages for Hiver, Gmelius, Canary Mail, SaneBox and Todoist.
 
+The round was then extended with Spike and Clean Email to study fast feed actions, grouped review, safeguards and activity history.
+
 ## Focus of this round
 
 Round one established a polished inbox workspace. Round two clarified queues and workflow. Round three focused on trust: how a user can understand the AI decision, verify the supporting information, and know whether an external action has happened.
@@ -13,6 +15,8 @@ Round one established a polished inbox workspace. Round two clarified queues and
 | Canary Mail | Privacy and processing boundaries are explained as product features | State that the source is traceable and the external calendar write remains locked. |
 | SaneBox | AI-created drafts remain reviewable and are never sent automatically | Treat the calendar event as a proposal until explicit confirmation. |
 | Todoist | Priority, labels and custom views reduce the time needed to find the next action | Keep the focused Deadline and Review queues introduced in round two. |
+| Spike | Summaries and immediate actions appear directly in the feed | Keep the decision, evidence and next action together in one result column. |
+| Clean Email | Risky automation is paired with previews, exclusions and activity logs | Make the three safety scenarios visually distinct and provide a readable local audit trail. |
 
 ## Changes adopted
 
@@ -20,6 +24,8 @@ Round one established a polished inbox workspace. Round two clarified queues and
 2. Successful extraction includes a short human-readable decision statement.
 3. A validation checklist shows four concrete guarantees: structured task, retained evidence, normalized time and locked calendar write.
 4. The interface does not display an invented confidence percentage. Trust is based on inspectable checks and evidence.
+5. Calendar review now shows Source, Policy and External effect before the action button.
+6. The safety audit has a readable activity view while retaining raw JSON for technical inspection.
 
 ## Scope control
 

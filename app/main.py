@@ -99,6 +99,18 @@ st.markdown(
     .trust-check {width:18px; height:18px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:var(--teal-soft); color:var(--teal); font-size:.68rem; font-weight:900;}
     .trust-lock {font-size:.68rem; color:#7b879c; font-weight:750;}
     .decision-banner {border-left:4px solid var(--brand); border-radius:10px; background:var(--brand-soft); padding:11px 13px; color:#35447a; font-size:.78rem; line-height:1.45; margin:10px 0 12px;}
+    .policy-grid {display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:12px 0 16px;}
+    .policy-card {border:1px solid var(--line); border-radius:14px; background:white; padding:13px 14px; min-height:88px;}
+    .policy-card span {display:block; color:#8993a7; font-size:.66rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; margin-bottom:7px;}
+    .policy-card b {display:block; color:var(--ink); font-size:.88rem; margin-bottom:4px;}
+    .policy-card small {display:block; color:var(--muted); font-size:.72rem; line-height:1.35;}
+    .policy-card.pass {border-top:4px solid var(--teal);}
+    .policy-card.review {border-top:4px solid var(--brand);}
+    .policy-card.block {border-top:4px solid #d58a1f;}
+    .audit-line {display:grid; grid-template-columns:78px 110px 1fr; gap:10px; padding:9px 11px; border-bottom:1px solid #edf0f5; font-size:.73rem; align-items:center;}
+    .audit-line:last-child {border-bottom:0;}
+    .audit-action {font-weight:800; color:var(--ink); text-transform:capitalize;}
+    .audit-status {color:#5267e8; font-weight:750;}
     .chain-flow {display:grid; grid-template-columns:1fr 24px 1fr 24px 1fr; align-items:center; gap:7px; margin:12px 0 19px;}
     .flow-card {border:1px solid var(--line); border-radius:13px; background:white; padding:12px; min-height:72px;}
     .flow-card b {display:block; color:var(--ink); font-size:.82rem; margin-bottom:4px;}
@@ -119,6 +131,7 @@ st.markdown(
       .hero h1{font-size:1.85rem}
       .brief-banner{align-items:flex-start;flex-direction:column}
       .route{grid-template-columns:repeat(2,1fr)}
+      .policy-grid{grid-template-columns:1fr}
       .chain-flow{grid-template-columns:1fr}
       .flow-arrow{transform:rotate(90deg)}
       [data-testid="stHorizontalBlock"]{flex-wrap:wrap !important;}
@@ -355,6 +368,25 @@ with safety_tab:
         ]
 
     safety_item = build_timeline(safety_emails)[0]
+    if scenario == "Eligible deadline":
+        safety_cards = (
+            '<div class="policy-card pass"><span>Source</span><b>Evidence complete</b><small>An exact deadline and timezone were found.</small></div>'
+            '<div class="policy-card review"><span>Policy</span><b>Preview allowed</b><small>The proposal still requires explicit approval.</small></div>'
+            '<div class="policy-card pass"><span>External effect</span><b>0 writes</b><small>No real calendar has been changed.</small></div>'
+        )
+    elif scenario == "Ambiguous next Friday":
+        safety_cards = (
+            '<div class="policy-card block"><span>Source</span><b>Date is ambiguous</b><small>“Next Friday” is unsafe to normalize here.</small></div>'
+            '<div class="policy-card block"><span>Policy</span><b>Preview blocked</b><small>The user must clarify the date first.</small></div>'
+            '<div class="policy-card pass"><span>External effect</span><b>0 writes</b><small>The calendar remains unchanged.</small></div>'
+        )
+    else:
+        safety_cards = (
+            '<div class="policy-card pass"><span>Source</span><b>Cancellation detected</b><small>The later email overrides the original event.</small></div>'
+            '<div class="policy-card block"><span>Policy</span><b>New event blocked</b><small>A cancelled task cannot create a calendar item.</small></div>'
+            '<div class="policy-card pass"><span>External effect</span><b>0 writes</b><small>The calendar remains unchanged.</small></div>'
+        )
+    st.markdown(f'<div class="policy-grid">{safety_cards}</div>', unsafe_allow_html=True)
     st.session_state.setdefault("calendar_events", {})
     st.session_state.setdefault("calendar_audit", [])
     store = InMemoryCalendarStore(st.session_state["calendar_events"])
@@ -388,7 +420,21 @@ with safety_tab:
         st.caption("The user must clarify or resolve the source email before a new preview can be created.")
 
     with st.expander("View safety audit"):
-        st.json(st.session_state["calendar_audit"][-10:])
+        recent_audit = st.session_state["calendar_audit"][-8:]
+        if not recent_audit:
+            st.caption("No policy decisions recorded in this session.")
+        else:
+            audit_rows = "".join(
+                '<div class="audit-line">'
+                f'<span class="audit-action">{entry.get("action", "check")}</span>'
+                f'<span class="audit-status">{entry.get("status", "unknown").replace("_", " ")}</span>'
+                f'<span>{entry.get("reason") or entry.get("event_id") or entry.get("proposal_id") or "Policy evaluated"}</span>'
+                '</div>'
+                for entry in reversed(recent_audit)
+            )
+            st.markdown(f'<div class="trust-panel">{audit_rows}</div>', unsafe_allow_html=True)
+        with st.expander("Raw audit JSON"):
+            st.json(recent_audit)
 
 with evaluation_tab:
     st.subheader("Provisional offline evaluation")

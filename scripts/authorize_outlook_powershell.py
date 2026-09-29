@@ -22,7 +22,7 @@ def main() -> int:
         return 1
     command = (
         "$ErrorActionPreference='Stop'; Import-Module Microsoft.Graph.Authentication; "
-        "Connect-MgGraph -Scopes 'Mail.Read' -NoWelcome -ContextScope CurrentUser; "
+        "Connect-MgGraph -TenantId 'consumers' -Scopes 'Mail.Read' -NoWelcome -ContextScope CurrentUser; "
         "$ctx=Get-MgContext; $ctx | Select-Object Account,TenantId,Scopes | ConvertTo-Json -Compress"
     )
     completed = subprocess.run([shell, "-NoProfile", "-Command", command], text=True)

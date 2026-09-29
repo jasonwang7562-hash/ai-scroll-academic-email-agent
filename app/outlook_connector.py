@@ -195,7 +195,7 @@ class OutlookMailboxConnector:
         script = (
             "$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'; "
             "Import-Module Microsoft.Graph.Authentication; "
-            "Connect-MgGraph -Scopes 'Mail.Read' -NoWelcome -ContextScope CurrentUser; "
+            "Connect-MgGraph -TenantId 'consumers' -Scopes 'Mail.Read' -NoWelcome -ContextScope CurrentUser; "
             f"$response=Invoke-MgGraphRequest -Method GET -Uri '{uri}'; "
             "@($response.value) | ConvertTo-Json -Depth 20 -Compress"
         )

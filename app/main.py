@@ -11,6 +11,7 @@ from app.evaluation_reporting import (
     comparison_rows, error_counts, filter_errors, load_errors, load_evaluation, primary_metrics,
 )
 from app.extractor import extract
+from app.inbox_agent import DemoMailboxConnector, InboxAgent
 from app.label_review import (
     CALENDAR_ACTIONS, RELATIONS, TASK_TYPES, URGENCIES, load_jsonl, load_review_rows,
     review_progress, save_review_row, validate_review,
@@ -121,6 +122,12 @@ st.markdown(
     .approval-item span {display:block; color:#8790a5; font-size:.64rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; margin-bottom:5px;}
     .approval-item b {display:block; color:var(--ink); font-size:.8rem; margin-bottom:3px;}
     .approval-item small {display:block; color:var(--muted); font-size:.7rem; line-height:1.35;}
+    .agent-grid {display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:12px 0 18px;}
+    .agent-card {background:white; border:1px solid var(--line); border-radius:15px; padding:14px 15px;}
+    .agent-card span {display:block; color:#8790a5; font-size:.65rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; margin-bottom:5px;}
+    .agent-card b {display:block; color:var(--ink); font-size:.9rem; margin-bottom:3px;}
+    .agent-card small {color:var(--muted); font-size:.72rem; line-height:1.4;}
+    .agent-run {border:1px solid #cfd7fb; background:linear-gradient(120deg,#f2f4ff,#eefaf7); border-radius:18px; padding:18px; margin-bottom:14px;}
     .chain-flow {display:grid; grid-template-columns:1fr 24px 1fr 24px 1fr; align-items:center; gap:7px; margin:12px 0 19px;}
     .flow-card {border:1px solid var(--line); border-radius:13px; background:white; padding:12px; min-height:72px;}
     .flow-card b {display:block; color:var(--ink); font-size:.82rem; margin-bottom:4px;}
@@ -132,7 +139,8 @@ st.markdown(
     .empty-state {border:1px dashed #cbd2e3; border-radius:18px; padding:34px 22px; text-align:center; background:rgba(255,255,255,.68); color:var(--muted);}
     .empty-state b {display:block; color:var(--ink); font-size:1rem; margin-bottom:6px;}
     .stButton > button[kind="primary"] {background:var(--brand); border-color:var(--brand); border-radius:11px; min-height:46px; font-weight:750;}
-    .stButton > button[kind="secondary"] {border-radius:11px; min-height:43px;}
+    .stButton > button[kind="secondary"] {border-radius:11px; min-height:43px; background:white !important; color:var(--ink) !important; border:1px solid #cfd6e5 !important;}
+    .stButton > button[kind="secondary"]:disabled {background:#eef1f6 !important; color:#7a8498 !important;}
     .stTextInput input, .stTextArea textarea, .stSelectbox > div > div {border-radius:11px !important; border-color:#d9deea !important; background:white !important;}
     .before {color:#8b3a3a; text-decoration:line-through;}
     .after {color:#176b52; font-weight:700;}
@@ -143,6 +151,7 @@ st.markdown(
       .route{grid-template-columns:repeat(2,1fr)}
       .policy-grid{grid-template-columns:1fr}
       .approval-summary{grid-template-columns:1fr}
+      .agent-grid{grid-template-columns:1fr}
       .chain-flow{grid-template-columns:1fr}
       .flow-arrow{transform:rotate(90deg)}
       [data-testid="stHorizontalBlock"]{flex-wrap:wrap !important;}
@@ -258,22 +267,35 @@ def show_timeline_item(item: TimelineItem):
         st.json(item.model_dump())
 
 
+st.session_state.setdefault("demo_mailbox_connected", False)
+st.session_state.setdefault("agent_run", None)
+agent_snapshot = st.session_state["agent_run"]
+mailbox_status = "Connected" if st.session_state["demo_mailbox_connected"] else "Not connected"
+scanned_count = agent_snapshot.scanned if agent_snapshot else 0
+prepared_count = len(agent_snapshot.timeline) if agent_snapshot else 0
+attention_count = agent_snapshot.review_required if agent_snapshot else 0
+agent_focus = (
+    "The latest mailbox run is complete. Review the prepared course timeline and approve only verified calendar proposals."
+    if agent_snapshot else
+    "Connect a mailbox once, then let AI Scroll fetch, filter and consolidate new academic mail for you."
+)
+
 st.markdown(
-    """
+    f"""
     <div class="hero">
-      <div class="hero-kicker">✦ AI SCROLL · ACADEMIC INBOX</div>
-      <h1>Never miss an academic deadline.</h1>
-      <p>Turn changing course emails into one evidence-backed timeline, then review every calendar action before it happens.</p>
+      <div class="hero-kicker">✦ AI SCROLL · AUTONOMOUS INBOX AGENT</div>
+      <h1>Connect once. Let the agent follow every deadline.</h1>
+      <p>AI Scroll watches new academic mail, merges changing instructions and prepares evidence-backed actions for your approval.</p>
     </div>
     <div class="status-strip">
-      <div class="status-card"><div class="number">1</div><div class="label">Selected email</div></div>
-      <div class="status-card"><div class="number">1</div><div class="label">Deadline update chain</div></div>
-      <div class="status-card"><div class="number">50</div><div class="label">Evaluation cases</div></div>
+      <div class="status-card"><div class="number">{mailbox_status}</div><div class="label">Mailbox agent</div></div>
+      <div class="status-card"><div class="number">{scanned_count}</div><div class="label">Messages scanned</div></div>
+      <div class="status-card"><div class="number">{prepared_count}</div><div class="label">Course tasks prepared</div></div>
       <div class="status-card"><div class="number">0</div><div class="label">Unauthorized writes</div></div>
     </div>
     <div class="brief-banner">
-      <div class="brief-copy"><b>Today’s focus: verify the PE6201 submission deadline</b>One academic email is ready to analyze. AI Scroll will keep the source sentence beside every proposed calendar event.</div>
-      <div class="brief-action">1 item needs attention</div>
+      <div class="brief-copy"><b>Agent status</b>{agent_focus}</div>
+      <div class="brief-action">{attention_count} item(s) need review</div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -289,9 +311,72 @@ with st.sidebar:
     with st.expander("Urgency policy"):
         st.markdown("- **High:** within 72 hours\n- **Medium:** 4–7 days\n- **Low:** more than 7 days\n- **Clarification:** unsafe to infer")
 
-single_tab, chain_tab, safety_tab, evaluation_tab, review_tab = st.tabs(
-    ["Academic inbox", "Course timeline", "Calendar review", "Evaluation", "Label review"]
+agent_tab, single_tab, chain_tab, safety_tab, evaluation_tab, review_tab = st.tabs(
+    ["Agent workspace", "Academic inbox", "Course timeline", "Calendar review", "Evaluation", "Label review"]
 )
+
+with agent_tab:
+    st.markdown('<div class="eyebrow">Autonomous inbox agent</div>', unsafe_allow_html=True)
+    st.subheader("Connect once. Let the agent watch the inbox.")
+    st.caption("The agent fetches new messages, ignores unrelated mail, merges course updates and asks for approval before any calendar write.")
+
+    connected = st.session_state["demo_mailbox_connected"]
+    st.markdown(
+        '<div class="agent-grid">'
+        f'<div class="agent-card"><span>Mailbox</span><b>{"Connected" if connected else "Not connected"}</b><small>{"Local demo mailbox" if connected else "Choose a connector to begin"}</small></div>'
+        '<div class="agent-card"><span>Scan policy</span><b>New mail only</b><small>A real deployment would use a provider webhook or scheduled delta sync.</small></div>'
+        '<div class="agent-card"><span>Safety policy</span><b>Human approval</b><small>The agent can prepare proposals but cannot write to a calendar by itself.</small></div>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+    connect_col, run_col, real_col = st.columns(3)
+    if connect_col.button(
+        "Demo mailbox connected" if connected else "Connect demo mailbox",
+        type="secondary",
+        use_container_width=True,
+        disabled=connected,
+    ):
+        st.session_state["demo_mailbox_connected"] = True
+        st.rerun()
+    if run_col.button("Run inbox agent now", type="primary", use_container_width=True, disabled=not connected):
+        st.session_state["agent_run"] = InboxAgent(DemoMailboxConnector()).run(
+            now=datetime.fromisoformat("2026-09-26T12:00:00+08:00")
+        )
+        st.rerun()
+    if real_col.button("Set up Gmail / Outlook", type="secondary", use_container_width=True):
+        st.session_state["show_mailbox_setup"] = True
+
+    if st.session_state.get("show_mailbox_setup"):
+        st.info(
+            "Real mailbox access is not active yet. It requires a Gmail or Microsoft OAuth app and one user authorization. "
+            "Use read-only mail scope first; calendar access should remain a separate approval-gated permission."
+        )
+
+    agent_run = st.session_state.get("agent_run")
+    if agent_run is None:
+        st.markdown(
+            '<div class="agent-run"><b>Ready for an autonomous run</b><br><span>Connect the demo mailbox, then select “Run inbox agent now”. You will not paste any individual email.</span></div>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.success(f"Agent completed a mailbox run through {agent_run.connector}.")
+        metric_cols = st.columns(4)
+        metric_cols[0].metric("Messages scanned", agent_run.scanned)
+        metric_cols[1].metric("Academic mail", agent_run.academic)
+        metric_cols[2].metric("Noise ignored", agent_run.ignored)
+        metric_cols[3].metric("Needs review", agent_run.review_required)
+        st.markdown("#### Agent-created course timeline")
+        for item in agent_run.timeline:
+            deadline = datetime.fromisoformat(item.deadline_iso).strftime("%d %b %Y, %I:%M %p") if item.deadline_iso else "No active deadline"
+            status_class = "badge-green" if item.status == "active" else "badge-red" if item.status == "cancelled" else "badge-amber"
+            st.markdown(
+                f'<div class="result-card"><span class="badge {status_class}">{item.status.title()}</span>'
+                f'<span class="badge badge-blue">{item.course}</span>'
+                f'<div class="result-title">{item.task_title}</div>'
+                f'<div class="result-meta">{deadline} · {len(item.source_email_ids)} source email(s) merged · Action: {item.calendar_action}</div></div>',
+                unsafe_allow_html=True,
+            )
+        st.info("The agent stopped at review. Open Calendar review to inspect evidence and approve an eligible proposal.")
 
 with single_tab:
     rail, email_panel, assistant_panel = st.columns([0.62, 1.25, 1.05], gap="large")

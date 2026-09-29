@@ -38,6 +38,7 @@ Keep the AI Scroll topic. The instructor's feedback supports the core idea and s
 - Calendar review now places the exact source evidence before approval, explains the simulated write and retry protection, and suppresses duplicate audit rows caused by Streamlit reruns.
 - The Evaluation tab now presents the primary high-priority deadline metric, exact denominators, baseline deltas, split-specific results, current-pipeline error analysis and per-thread merge verification.
 - The live-model evaluation, token and cost analysis, independent real-email test set, remote GitHub repository, final report and final demo are still outstanding.
+- The app now has an Agent workspace that connects once, scans a mailbox, filters unrelated mail, consolidates course update chains and stops at human review before any calendar write. The bundled demo run scans five messages, keeps four academic messages, ignores one unrelated message and prepares two consolidated timeline items; real Gmail or Outlook access still requires OAuth setup and one user authorization.
 
 ## Next milestone
 

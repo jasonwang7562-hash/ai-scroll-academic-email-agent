@@ -7,6 +7,9 @@ from pathlib import Path
 import streamlit as st
 
 from app.calendar_gate import CalendarApprovalGate, CalendarPolicyError, InMemoryCalendarStore
+from app.evaluation_reporting import (
+    comparison_rows, error_counts, filter_errors, load_errors, load_evaluation, primary_metrics,
+)
 from app.extractor import extract
 from app.label_review import (
     CALENDAR_ACTIONS, RELATIONS, TASK_TYPES, URGENCIES, load_jsonl, load_review_rows,
@@ -45,6 +48,8 @@ st.markdown(
     [data-testid="stTabs"] button {font-size:.95rem; font-weight:650; padding:.85rem 1rem;}
     [data-testid="stMetric"] {background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px 16px; box-shadow:0 8px 24px rgba(20,33,61,.04);}
     [data-testid="stMetricValue"] {font-size:1.5rem; color:var(--ink);}
+    [data-testid="stMetricLabel"] {color:#526078 !important; font-weight:700;}
+    [data-testid="stAlert"] p {color:var(--ink); font-weight:600;}
     .eyebrow {color:var(--brand); font-weight:800; letter-spacing:.1em; font-size:.72rem; text-transform:uppercase;}
     .hero {background:linear-gradient(120deg,#101936 0%,#182451 58%,#26346f 100%); color:white; border-radius:24px; padding:28px 32px; margin:.4rem 0 1.25rem; box-shadow:0 18px 45px rgba(24,36,81,.18); overflow:hidden; position:relative;}
     .hero:after {content:""; position:absolute; width:260px; height:260px; border-radius:50%; right:-90px; top:-130px; background:radial-gradient(circle,rgba(96,193,255,.35),rgba(82,103,232,0));}
@@ -463,6 +468,7 @@ with safety_tab:
             st.json(recent_audit)
 
 with evaluation_tab:
+    st.markdown('<div class="eyebrow">Evaluation evidence</div>', unsafe_allow_html=True)
     st.subheader("Provisional offline evaluation")
     st.warning(
         "These are development diagnostics, not final assignment results. "
@@ -472,30 +478,71 @@ with evaluation_tab:
     if not metrics_path.exists():
         st.info("Run `python 04_evaluation/score_development.py` to create the comparison.")
     else:
-        evaluation = json.loads(metrics_path.read_text(encoding="utf-8"))
-        systems = evaluation["systems"]
-        baseline = systems["keyword_date_baseline_v1"]["metrics"]
-        current = systems["deterministic_dev_pipeline_v1"]["metrics"]
-        labels = [
-            ("Course", "course_identification"),
-            ("Task type", "task_type_classification"),
-            ("Exact deadline", "deadline_exact_on_deadline_cases"),
-            ("Urgency", "urgency_classification"),
-            ("Calendar action", "calendar_action"),
-            ("Cross-email merge", "cross_email_merging"),
-        ]
-        comparison = []
-        for label, key in labels:
-            comparison.append({
-                "Capability": label,
-                "Keyword/date baseline": f"{baseline[key]['correct']}/{baseline[key]['total']}",
-                "Current pipeline": f"{current[key]['correct']}/{current[key]['total']}",
-            })
-        st.table(comparison)
+        evaluation = load_evaluation(metrics_path)
+        summary_cols = st.columns(4)
+        for column, metric in zip(summary_cols, primary_metrics(evaluation)):
+            column.metric(metric["label"], metric["value"], help=metric["detail"])
+
+        st.markdown("#### Baseline comparison")
+        split = st.selectbox(
+            "Evaluation split",
+            ["all", "development", "test", "synthetic_holdout"],
+            format_func=lambda value: {
+                "all": "All 50 emails",
+                "development": "Development · 20 emails",
+                "test": "Test · 18 emails",
+                "synthetic_holdout": "Synthetic holdout · 12 emails",
+            }[value],
+            key="evaluation_split",
+        )
+        st.table(comparison_rows(evaluation, split=split))
         st.caption(
             f"Reference time: {evaluation['reference_time']} · "
             f"Population: {evaluation['population']['emails']} emails, "
             f"{evaluation['population']['multi_email_threads']} multi-email threads"
+        )
+
+        errors_path = ROOT / "04_evaluation" / "outputs" / "development_errors.csv"
+        if errors_path.exists():
+            current_errors = load_errors(errors_path)
+            st.markdown("#### Current-pipeline error analysis")
+            error_summary, error_detail = st.columns([1, 2])
+            with error_summary:
+                st.caption(f"{len(current_errors)} field-level errors across the 50 provisional cases")
+                st.table(error_counts(current_errors))
+            with error_detail:
+                field_options = ["all", *sorted({row["field"] for row in current_errors})]
+                selected_field = st.selectbox(
+                    "Error field",
+                    field_options,
+                    format_func=lambda value: "All fields" if value == "all" else value.replace("_", " ").title(),
+                    key="evaluation_error_field",
+                )
+                selected_errors = filter_errors(current_errors, split=split, field=selected_field)
+                st.caption(f"Showing {len(selected_errors)} errors for the selected filters")
+                st.dataframe(
+                    [{
+                        "Case": row["email_id"],
+                        "Split": row["split"],
+                        "Field": row["field"],
+                        "Predicted": row["predicted"] or "—",
+                        "Draft expected": row["gold_draft"] or "—",
+                    } for row in selected_errors],
+                    use_container_width=True,
+                    hide_index=True,
+                )
+
+        st.markdown("#### Multi-email chain verification")
+        st.dataframe(
+            [{
+                "Thread": row["thread_id"],
+                "Split": row["split"],
+                "Final state": "Pass" if row["merged_final_state_correct"] else "Fail",
+                "Full record": "Pass" if row["full_record_correct"] else "Fail",
+                "Timeline items": row["timeline_items_returned"],
+            } for row in evaluation["merge_details"]],
+            use_container_width=True,
+            hide_index=True,
         )
         with st.expander("Why these results are not final"):
             for limitation in evaluation["limitations"]:

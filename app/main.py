@@ -31,7 +31,7 @@ from app.outlook_connector import (
     microsoft_client_id,
     microsoft_config_path,
     microsoft_tenant_id,
-    microsoft_token_path,
+    outlook_graph_marker_path,
     outlook_is_authorized,
     save_microsoft_config,
 )
@@ -456,51 +456,53 @@ with agent_tab:
             outlook_left, outlook_right = st.columns([1.45, 1])
             with outlook_left:
                 st.markdown(
-                    "1. Open Microsoft Entra and create an **App registration**.\n"
-                    "2. Add **Mobile and desktop applications** with `http://localhost`.\n"
-                    "3. Enable **Allow public client flows**.\n"
-                    "4. Add delegated Microsoft Graph permission **Mail.Read**.\n"
-                    "5. Copy the Application (client) ID below."
+                    "**Recommended for a personal Outlook account**\n\n"
+                    "Use Microsoft's official Graph sign-in. No app registration or client secret is required. "
+                    "Choose the personal Outlook account and approve read-only mail access."
                 )
-                st.link_button(
-                    "Open Microsoft app registrations",
-                    "https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade",
-                    use_container_width=True,
-                )
-                configured_client = microsoft_client_id()
-                entered_client = st.text_input(
-                    "Application (client) ID",
-                    value=configured_client,
-                    placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-                )
-                entered_tenant = st.text_input(
-                    "Directory (tenant) ID",
-                    value=microsoft_tenant_id(),
-                    help="Use the NTU tenant ID when the app is registered inside the university tenant.",
-                )
-                if st.button("Save Microsoft app settings", use_container_width=True, disabled=not entered_client.strip()):
-                    save_microsoft_config(entered_client, entered_tenant)
-                    st.success(f"Saved locally to {microsoft_config_path()}")
-                    st.rerun()
-            with outlook_right:
-                st.metric("Microsoft app", "Configured" if microsoft_client_id() else "Missing")
-                st.metric("Outlook token", "Authorized" if outlook_authorized else "Not authorized")
                 if st.button(
-                    "Start Outlook authorization",
+                    "Authorize personal Outlook",
                     type="primary",
                     use_container_width=True,
-                    disabled=not microsoft_client_id() or outlook_authorized,
+                    disabled=outlook_authorized,
                 ):
                     creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
                     subprocess.Popen(
-                        [sys.executable, str(ROOT / "scripts" / "authorize_outlook.py")],
+                        [sys.executable, str(ROOT / "scripts" / "authorize_outlook_powershell.py")],
                         cwd=str(ROOT),
                         creationflags=creation_flags,
                     )
-                    st.info("Microsoft authorization opened in your browser. Sign in with the student account, allow Mail.Read, then refresh status.")
+                    st.info("Microsoft authorization opened. Choose the personal Outlook account, approve Mail.Read, then refresh status.")
+                with st.expander("Advanced: custom Entra app"):
+                    st.markdown(
+                        "Use this only when an organization permits app registration. Add a desktop/public client, "
+                        "enable public client flows and grant delegated `Mail.Read`."
+                    )
+                    st.link_button(
+                        "Open Microsoft app registrations",
+                        "https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade",
+                        use_container_width=True,
+                    )
+                    configured_client = microsoft_client_id()
+                    entered_client = st.text_input(
+                        "Application (client) ID",
+                        value=configured_client,
+                        placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                    )
+                    entered_tenant = st.text_input(
+                        "Directory (tenant) ID",
+                        value=microsoft_tenant_id(),
+                    )
+                    if st.button("Save Microsoft app settings", use_container_width=True, disabled=not entered_client.strip()):
+                        save_microsoft_config(entered_client, entered_tenant)
+                        st.success(f"Saved locally to {microsoft_config_path()}")
+                        st.rerun()
+            with outlook_right:
+                st.metric("Outlook account", "Authorized" if outlook_authorized else "Not authorized")
+                st.metric("Outlook token", "Authorized" if outlook_authorized else "Not authorized")
                 if st.button("Refresh Outlook status", use_container_width=True):
                     st.rerun()
-                st.caption(f"Token location: {microsoft_token_path()}")
+                st.caption(f"Local authorization marker: {outlook_graph_marker_path()}")
 
     agent_run = st.session_state.get("agent_run")
     if agent_run is None:

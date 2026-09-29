@@ -4,6 +4,8 @@ import html
 import json
 import os
 import re
+import shutil
+import subprocess
 from pathlib import Path
 
 import requests
@@ -32,6 +34,16 @@ def microsoft_config_path() -> Path:
     return _configured_path(
         "AI_SCROLL_MICROSOFT_CONFIG", "data/private/microsoft_oauth.json"
     )
+
+
+def outlook_graph_marker_path() -> Path:
+    return _configured_path(
+        "AI_SCROLL_OUTLOOK_GRAPH_MARKER", "data/private/outlook_graph_authorized.json"
+    )
+
+
+def powershell_outlook_is_authorized() -> bool:
+    return outlook_graph_marker_path().is_file()
 
 
 def _local_config() -> dict:
@@ -74,7 +86,9 @@ def outlook_is_configured() -> bool:
 
 
 def outlook_is_authorized() -> bool:
-    return outlook_is_configured() and microsoft_token_path().is_file()
+    return powershell_outlook_is_authorized() or (
+        outlook_is_configured() and microsoft_token_path().is_file()
+    )
 
 
 def _body_text(message: dict) -> str:
@@ -153,6 +167,8 @@ class OutlookMailboxConnector:
         self.max_results = min(max_results, 100)
 
     def fetch_new(self) -> list[EmailInput]:
+        if powershell_outlook_is_authorized():
+            return self._fetch_via_powershell()
         response = requests.get(
             f"{GRAPH_BASE_URL}/me/mailFolders/inbox/messages",
             headers={"Authorization": f"Bearer {acquire_outlook_token_silent()}"},
@@ -166,3 +182,36 @@ class OutlookMailboxConnector:
         if not response.ok:
             raise RuntimeError(f"Microsoft Graph request failed ({response.status_code}): {response.text[:300]}")
         return [graph_message_to_email(item) for item in response.json().get("value", [])]
+
+    def _fetch_via_powershell(self) -> list[EmailInput]:
+        shell = shutil.which("pwsh") or shutil.which("powershell")
+        if not shell:
+            raise RuntimeError("PowerShell is required for the Outlook connector.")
+        uri = (
+            "https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages"
+            f"?`$top={self.max_results}&`$orderby=receivedDateTime%20desc"
+            "&`$select=subject,from,receivedDateTime,body,bodyPreview"
+        )
+        script = (
+            "$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue'; "
+            "Import-Module Microsoft.Graph.Authentication; "
+            "Connect-MgGraph -Scopes 'Mail.Read' -NoWelcome -ContextScope CurrentUser; "
+            f"$response=Invoke-MgGraphRequest -Method GET -Uri '{uri}'; "
+            "@($response.value) | ConvertTo-Json -Depth 20 -Compress"
+        )
+        completed = subprocess.run(
+            [shell, "-NoProfile", "-Command", script],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=False,
+        )
+        if completed.returncode != 0:
+            raise RuntimeError(f"Outlook mailbox read failed: {completed.stderr[-400:]}")
+        try:
+            raw = json.loads(completed.stdout.strip() or "[]")
+        except json.JSONDecodeError as exc:
+            raise RuntimeError("Outlook returned an unreadable response.") from exc
+        if isinstance(raw, dict):
+            raw = [raw]
+        return [graph_message_to_email(item) for item in raw]

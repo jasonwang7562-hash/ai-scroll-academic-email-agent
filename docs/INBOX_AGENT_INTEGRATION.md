@@ -33,3 +33,13 @@ The real connector currently reads at most 100 messages from the last 60 days. I
 5. Start Outlook authorization and sign in with the student Microsoft 365 account.
 
 The client configuration and MSAL token cache are stored in ignored files under `data/private`. The connector reads up to 100 recent Inbox messages through Microsoft Graph and cannot send, modify or delete email.
+
+### Personal Outlook fallback for restricted university tenants
+
+When a university tenant blocks app registration and third-party Graph clients, AI Scroll can use a personal Outlook account as a restricted ingestion mailbox:
+
+1. Add an Outlook rule that forwards only selected course messages to the personal account while retaining the original.
+2. Authorize the personal account through Microsoft's official Graph Command Line Tools with delegated `Mail.Read`.
+3. AI Scroll reuses the local Microsoft authentication cache and reads the personal Inbox through Microsoft Graph.
+
+This avoids forwarding the entire student mailbox and avoids requiring the university to register an application. It should be documented as a provider-policy fallback, with the forwarded filter and privacy boundary stated explicitly.

@@ -43,3 +43,13 @@ When a university tenant blocks app registration and third-party Graph clients, 
 3. AI Scroll reuses the local Microsoft authentication cache and reads the personal Inbox through Microsoft Graph.
 
 This avoids forwarding the entire student mailbox and avoids requiring the university to register an application. It should be documented as a provider-policy fallback, with the forwarded filter and privacy boundary stated explicitly.
+
+## Scan policy and audit trail
+
+The Agent workspace accepts a comma-separated course scope. Messages are classified before extraction:
+
+- a matching course code is processed;
+- a detected course outside the configured scope is ignored;
+- a message without a course code is ignored.
+
+The UI records the sender, subject, matched course code, decision and reason. It does not display or send the body of ignored messages to extraction. Each run also records elapsed time so the live demo can show operational behavior as well as model output.

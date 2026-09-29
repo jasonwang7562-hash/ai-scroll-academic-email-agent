@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from datetime import datetime
+from time import perf_counter
 from typing import Protocol
 
 from app.merge_engine import build_timeline
@@ -59,6 +60,15 @@ class DemoMailboxConnector:
 
 
 @dataclass(frozen=True)
+class ScanDecision:
+    subject: str
+    sender: str
+    course_codes: tuple[str, ...]
+    decision: str
+    reason: str
+
+
+@dataclass(frozen=True)
 class AgentRunResult:
     connector: str
     scanned: int
@@ -66,15 +76,23 @@ class AgentRunResult:
     ignored: int
     review_required: int
     timeline: list[TimelineItem]
+    decisions: list[ScanDecision]
+    duration_ms: int
 
 
 class InboxAgent:
-    def __init__(self, connector: MailboxConnector):
+    def __init__(self, connector: MailboxConnector, *, allowed_courses: set[str] | None = None):
         self.connector = connector
+        self.allowed_courses = {course.upper() for course in allowed_courses or set()}
 
     def run(self, *, now: datetime | None = None) -> AgentRunResult:
+        started = perf_counter()
         messages = self.connector.fetch_new()
-        academic = [message for message in messages if self.is_academic(message)]
+        decisions = [self.classify(message) for message in messages]
+        academic = [
+            message for message, decision in zip(messages, decisions)
+            if decision.decision == "process"
+        ]
         timeline = build_timeline(academic, now=now)
         review_required = sum(
             item.calendar_action in {"create", "update", "ask_clarification"}
@@ -87,8 +105,37 @@ class InboxAgent:
             ignored=len(messages) - len(academic),
             review_required=review_required,
             timeline=timeline,
+            decisions=decisions,
+            duration_ms=round((perf_counter() - started) * 1000),
         )
 
-    @staticmethod
-    def is_academic(message: EmailInput) -> bool:
-        return bool(COURSE_CODE.search(f"{message.subject}\n{message.body}"))
+    def classify(self, message: EmailInput) -> ScanDecision:
+        found = tuple(dict.fromkeys(
+            match.upper() for match in COURSE_CODE.findall(f"{message.subject}\n{message.body}")
+        ))
+        if not found:
+            return ScanDecision(
+                subject=message.subject,
+                sender=message.sender,
+                course_codes=(),
+                decision="ignore",
+                reason="No course code detected",
+            )
+        if self.allowed_courses and not self.allowed_courses.intersection(found):
+            return ScanDecision(
+                subject=message.subject,
+                sender=message.sender,
+                course_codes=found,
+                decision="ignore",
+                reason="Outside configured course scope",
+            )
+        return ScanDecision(
+            subject=message.subject,
+            sender=message.sender,
+            course_codes=found,
+            decision="process",
+            reason="Course code matched scan policy",
+        )
+
+    def is_academic(self, message: EmailInput) -> bool:
+        return self.classify(message).decision == "process"

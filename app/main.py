@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import json
 import subprocess
 import sys
@@ -287,6 +288,7 @@ def show_timeline_item(item: TimelineItem):
 st.session_state.setdefault("demo_mailbox_connected", False)
 st.session_state.setdefault("mailbox_provider", "demo")
 st.session_state.setdefault("agent_run", None)
+st.session_state.setdefault("course_scope", "PE6201, HR6102")
 agent_snapshot = st.session_state["agent_run"]
 gmail_authorized = gmail_is_authorized()
 outlook_authorized = outlook_is_authorized()
@@ -356,14 +358,24 @@ with agent_tab:
         else "Outlook · read only" if active_provider == "outlook" and outlook_authorized
         else "Local demo mailbox"
     )
+    course_scope = st.session_state["course_scope"]
+    scan_policy_label = html.escape(course_scope or "All detected course codes")
     st.markdown(
         '<div class="agent-grid">'
         f'<div class="agent-card"><span>Mailbox</span><b>{"Connected" if connected else "Not connected"}</b><small>{connector_name if connected else "Choose a connector to begin"}</small></div>'
-        '<div class="agent-card"><span>Scan policy</span><b>New mail only</b><small>A real deployment would use a provider webhook or scheduled delta sync.</small></div>'
+        f'<div class="agent-card"><span>Course scope</span><b>{scan_policy_label}</b><small>Messages outside this scope stay out of the extraction pipeline.</small></div>'
         '<div class="agent-card"><span>Safety policy</span><b>Human approval</b><small>The agent can prepare proposals but cannot write to a calendar by itself.</small></div>'
         '</div>',
         unsafe_allow_html=True,
     )
+    with st.expander("Agent scan policy"):
+        st.text_input(
+            "Course codes",
+            key="course_scope",
+            placeholder="PE6201, HR6102",
+            help="Comma-separated. Leave blank to process every detected course code.",
+        )
+        st.caption("Only the subject, sender and matched course codes are shown in the decision log; ignored message bodies are not displayed.")
     connect_col, gmail_col, outlook_col = st.columns(3)
     if connect_col.button(
         "Using demo mailbox" if connected and active_provider == "demo" else "Use demo mailbox",
@@ -403,7 +415,14 @@ with agent_tab:
                 else OutlookMailboxConnector() if active_provider == "outlook"
                 else DemoMailboxConnector()
             )
-            st.session_state["agent_run"] = InboxAgent(connector).run(
+            allowed_courses = {
+                course.strip().upper()
+                for course in st.session_state["course_scope"].split(",")
+                if course.strip()
+            }
+            st.session_state["agent_run"] = InboxAgent(
+                connector, allowed_courses=allowed_courses
+            ).run(
                 now=datetime.now().astimezone()
             )
             st.rerun()
@@ -517,6 +536,7 @@ with agent_tab:
         metric_cols[1].metric("Academic mail", agent_run.academic)
         metric_cols[2].metric("Noise ignored", agent_run.ignored)
         metric_cols[3].metric("Needs review", agent_run.review_required)
+        st.caption(f"Completed in {agent_run.duration_ms} ms · No ignored message body was sent to extraction.")
         st.markdown("#### Agent-created course timeline")
         for item in agent_run.timeline:
             deadline = datetime.fromisoformat(item.deadline_iso).strftime("%d %b %Y, %I:%M %p") if item.deadline_iso else "No active deadline"
@@ -529,6 +549,22 @@ with agent_tab:
                 unsafe_allow_html=True,
             )
         st.info("The agent stopped at review. Open Calendar review to inspect evidence and approve an eligible proposal.")
+        st.markdown("#### Mailbox decision log")
+        st.caption("Audit metadata only. Ignored message bodies remain outside the extraction pipeline.")
+        st.dataframe(
+            [
+                {
+                    "Decision": decision.decision.title(),
+                    "Course": ", ".join(decision.course_codes) or "—",
+                    "Subject": decision.subject,
+                    "Sender": decision.sender,
+                    "Reason": decision.reason,
+                }
+                for decision in agent_run.decisions
+            ],
+            hide_index=True,
+            use_container_width=True,
+        )
 
 with single_tab:
     rail, email_panel, assistant_panel = st.columns([0.62, 1.25, 1.05], gap="large")

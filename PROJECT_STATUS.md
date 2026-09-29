@@ -42,6 +42,7 @@ Keep the AI Scroll topic. The instructor's feedback supports the core idea and s
 - A real Gmail read-only connector and local OAuth authorization flow are implemented. Client secrets and refresh tokens stay in the ignored `data/private` directory. Google Cloud currently requires the selected account to enable two-step verification before an OAuth client can be created, so the live mailbox authorization is not complete yet.
 - A parallel Outlook / Microsoft 365 connector now supports an NTU student mailbox through delegated Microsoft Graph `Mail.Read`. The Agent workspace includes local app-registration settings, interactive authorization and provider switching; an Entra application registration and student-account consent are still required before live scanning.
 - NTU blocks both student-created Entra applications and unassigned Microsoft Graph Command Line Tools access. A second connector path now supports a personal Outlook ingestion mailbox through Microsoft's official local authentication cache. The remaining external steps are accepting the personal Microsoft account's updated terms, granting `Mail.Read`, and creating a narrowly filtered Outlook forwarding rule for course mail.
+- The Agent workspace now exposes a configurable course-code scope, filters out-of-scope mail before extraction, records a metadata-only process/ignore decision for every scanned message and reports run latency. Ignored message bodies remain outside the extraction pipeline, making the privacy boundary visible in the demo and auditable in evaluation.
 
 ## Next milestone
 

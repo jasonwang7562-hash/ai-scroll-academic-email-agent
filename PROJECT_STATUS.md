@@ -39,6 +39,7 @@ Keep the AI Scroll topic. The instructor's feedback supports the core idea and s
 - The Evaluation tab now presents the primary high-priority deadline metric, exact denominators, baseline deltas, split-specific results, current-pipeline error analysis and per-thread merge verification.
 - The live-model evaluation, token and cost analysis, independent real-email test set, remote GitHub repository, final report and final demo are still outstanding.
 - The app now has an Agent workspace that connects once, scans a mailbox, filters unrelated mail, consolidates course update chains and stops at human review before any calendar write. The bundled demo run scans five messages, keeps four academic messages, ignores one unrelated message and prepares two consolidated timeline items; real Gmail or Outlook access still requires OAuth setup and one user authorization.
+- A real Gmail read-only connector and local OAuth authorization flow are implemented. Client secrets and refresh tokens stay in the ignored `data/private` directory. Google Cloud currently requires the selected account to enable two-step verification before an OAuth client can be created, so the live mailbox authorization is not complete yet.
 
 ## Next milestone
 

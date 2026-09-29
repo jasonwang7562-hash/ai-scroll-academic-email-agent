@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -11,6 +13,12 @@ from app.evaluation_reporting import (
     comparison_rows, error_counts, filter_errors, load_errors, load_evaluation, primary_metrics,
 )
 from app.extractor import extract
+from app.gmail_connector import (
+    GmailMailboxConnector,
+    client_secrets_path,
+    gmail_is_authorized,
+    gmail_token_path,
+)
 from app.inbox_agent import DemoMailboxConnector, InboxAgent
 from app.label_review import (
     CALENDAR_ACTIONS, RELATIONS, TASK_TYPES, URGENCIES, load_jsonl, load_review_rows,
@@ -268,9 +276,17 @@ def show_timeline_item(item: TimelineItem):
 
 
 st.session_state.setdefault("demo_mailbox_connected", False)
+st.session_state.setdefault("mailbox_provider", "demo")
 st.session_state.setdefault("agent_run", None)
 agent_snapshot = st.session_state["agent_run"]
-mailbox_status = "Connected" if st.session_state["demo_mailbox_connected"] else "Not connected"
+gmail_authorized = gmail_is_authorized()
+active_provider = st.session_state["mailbox_provider"]
+connected = gmail_authorized if active_provider == "gmail" else st.session_state["demo_mailbox_connected"]
+mailbox_status = (
+    "Gmail connected" if active_provider == "gmail" and gmail_authorized
+    else "Demo connected" if connected
+    else "Not connected"
+)
 scanned_count = agent_snapshot.scanned if agent_snapshot else 0
 prepared_count = len(agent_snapshot.timeline) if agent_snapshot else 0
 attention_count = agent_snapshot.review_required if agent_snapshot else 0
@@ -320,37 +336,85 @@ with agent_tab:
     st.subheader("Connect once. Let the agent watch the inbox.")
     st.caption("The agent fetches new messages, ignores unrelated mail, merges course updates and asks for approval before any calendar write.")
 
-    connected = st.session_state["demo_mailbox_connected"]
+    connector_name = "Gmail · read only" if active_provider == "gmail" and gmail_authorized else "Local demo mailbox"
     st.markdown(
         '<div class="agent-grid">'
-        f'<div class="agent-card"><span>Mailbox</span><b>{"Connected" if connected else "Not connected"}</b><small>{"Local demo mailbox" if connected else "Choose a connector to begin"}</small></div>'
+        f'<div class="agent-card"><span>Mailbox</span><b>{"Connected" if connected else "Not connected"}</b><small>{connector_name if connected else "Choose a connector to begin"}</small></div>'
         '<div class="agent-card"><span>Scan policy</span><b>New mail only</b><small>A real deployment would use a provider webhook or scheduled delta sync.</small></div>'
         '<div class="agent-card"><span>Safety policy</span><b>Human approval</b><small>The agent can prepare proposals but cannot write to a calendar by itself.</small></div>'
         '</div>',
         unsafe_allow_html=True,
     )
-    connect_col, run_col, real_col = st.columns(3)
+    connect_col, gmail_col, run_col, real_col = st.columns(4)
     if connect_col.button(
-        "Demo mailbox connected" if connected else "Connect demo mailbox",
+        "Using demo mailbox" if connected and active_provider == "demo" else "Use demo mailbox",
         type="secondary",
         use_container_width=True,
-        disabled=connected,
+        disabled=connected and active_provider == "demo",
     ):
         st.session_state["demo_mailbox_connected"] = True
+        st.session_state["mailbox_provider"] = "demo"
+        st.session_state["agent_run"] = None
+        st.rerun()
+    if gmail_col.button(
+        "Using Gmail" if connected and active_provider == "gmail" else "Use Gmail",
+        type="secondary",
+        use_container_width=True,
+        disabled=not gmail_authorized or (connected and active_provider == "gmail"),
+        help="Gmail access is read only.",
+    ):
+        st.session_state["mailbox_provider"] = "gmail"
+        st.session_state["agent_run"] = None
         st.rerun()
     if run_col.button("Run inbox agent now", type="primary", use_container_width=True, disabled=not connected):
-        st.session_state["agent_run"] = InboxAgent(DemoMailboxConnector()).run(
-            now=datetime.fromisoformat("2026-09-26T12:00:00+08:00")
-        )
-        st.rerun()
-    if real_col.button("Set up Gmail / Outlook", type="secondary", use_container_width=True):
-        st.session_state["show_mailbox_setup"] = True
+        try:
+            connector = GmailMailboxConnector() if active_provider == "gmail" else DemoMailboxConnector()
+            st.session_state["agent_run"] = InboxAgent(connector).run(
+                now=datetime.now().astimezone()
+            )
+            st.rerun()
+        except Exception as exc:
+            st.error(f"Mailbox run failed: {exc}")
+    if real_col.button("Set up Gmail", type="secondary", use_container_width=True):
+        st.session_state["show_mailbox_setup"] = not st.session_state.get("show_mailbox_setup", False)
 
     if st.session_state.get("show_mailbox_setup"):
-        st.info(
-            "Real mailbox access is not active yet. It requires a Gmail or Microsoft OAuth app and one user authorization. "
-            "Use read-only mail scope first; calendar access should remain a separate approval-gated permission."
-        )
+        st.markdown("#### Gmail read-only setup")
+        st.caption("AI Scroll requests only `gmail.readonly`. It cannot send, delete or modify email.")
+        setup_left, setup_right = st.columns([1.45, 1])
+        with setup_left:
+            st.markdown(
+                "1. In Google Cloud, enable **Gmail API**.\n"
+                "2. Configure the OAuth consent screen and add your Google account as a test user.\n"
+                "3. Create an **OAuth client ID → Desktop app** and download the JSON.\n"
+                "4. Save it at the private path shown here, then start authorization."
+            )
+            st.code(str(client_secrets_path()), language=None)
+            st.link_button(
+                "Open Google Cloud credentials",
+                "https://console.cloud.google.com/apis/credentials",
+                use_container_width=True,
+            )
+        with setup_right:
+            secret_ready = client_secrets_path().is_file()
+            st.metric("OAuth client file", "Ready" if secret_ready else "Missing")
+            st.metric("Gmail token", "Authorized" if gmail_authorized else "Not authorized")
+            if st.button(
+                "Start Gmail authorization",
+                type="primary",
+                use_container_width=True,
+                disabled=not secret_ready or gmail_authorized,
+            ):
+                creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+                subprocess.Popen(
+                    [sys.executable, str(ROOT / "scripts" / "authorize_gmail.py")],
+                    cwd=str(ROOT),
+                    creationflags=creation_flags,
+                )
+                st.info("Google authorization opened in your browser. After allowing read-only access, select Refresh status.")
+            if st.button("Refresh authorization status", use_container_width=True):
+                st.rerun()
+            st.caption(f"Token location: {gmail_token_path()}")
 
     agent_run = st.session_state.get("agent_run")
     if agent_run is None:

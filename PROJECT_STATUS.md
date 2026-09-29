@@ -40,6 +40,7 @@ Keep the AI Scroll topic. The instructor's feedback supports the core idea and s
 - The live-model evaluation, token and cost analysis, independent real-email test set, remote GitHub repository, final report and final demo are still outstanding.
 - The app now has an Agent workspace that connects once, scans a mailbox, filters unrelated mail, consolidates course update chains and stops at human review before any calendar write. The bundled demo run scans five messages, keeps four academic messages, ignores one unrelated message and prepares two consolidated timeline items; real Gmail or Outlook access still requires OAuth setup and one user authorization.
 - A real Gmail read-only connector and local OAuth authorization flow are implemented. Client secrets and refresh tokens stay in the ignored `data/private` directory. Google Cloud currently requires the selected account to enable two-step verification before an OAuth client can be created, so the live mailbox authorization is not complete yet.
+- A parallel Outlook / Microsoft 365 connector now supports an NTU student mailbox through delegated Microsoft Graph `Mail.Read`. The Agent workspace includes local app-registration settings, interactive authorization and provider switching; an Entra application registration and student-account consent are still required before live scanning.
 
 ## Next milestone
 

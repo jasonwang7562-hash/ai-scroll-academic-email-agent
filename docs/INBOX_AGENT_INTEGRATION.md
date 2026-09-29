@@ -23,3 +23,13 @@ OAuth client credentials and one user authorization are required before the real
 6. Approve the read-only Gmail scope. The refresh token is stored at `data/private/gmail_token.json` and both files remain outside Git.
 
 The real connector currently reads at most 100 messages from the last 60 days. It does not send, modify or delete email. The agent still filters for academic course codes before building the timeline.
+
+## Outlook / Microsoft 365 setup now implemented
+
+1. Register a public client application in Microsoft Entra.
+2. Add the Mobile and desktop application platform with `http://localhost` and allow public client flows.
+3. Add the delegated Microsoft Graph `Mail.Read` permission.
+4. Enter the Application (client) ID and Directory (tenant) ID in the Agent workspace.
+5. Start Outlook authorization and sign in with the student Microsoft 365 account.
+
+The client configuration and MSAL token cache are stored in ignored files under `data/private`. The connector reads up to 100 recent Inbox messages through Microsoft Graph and cannot send, modify or delete email.

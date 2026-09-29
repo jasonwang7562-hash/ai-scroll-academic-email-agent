@@ -26,6 +26,15 @@ from app.label_review import (
 )
 from app.merge_engine import build_timeline
 from app.models import CalendarProposal, EmailInput, TimelineItem
+from app.outlook_connector import (
+    OutlookMailboxConnector,
+    microsoft_client_id,
+    microsoft_config_path,
+    microsoft_tenant_id,
+    microsoft_token_path,
+    outlook_is_authorized,
+    save_microsoft_config,
+)
 from app.sample_data import SAMPLE_BODY, SAMPLE_SENDER, SAMPLE_SUBJECT
 
 
@@ -280,10 +289,16 @@ st.session_state.setdefault("mailbox_provider", "demo")
 st.session_state.setdefault("agent_run", None)
 agent_snapshot = st.session_state["agent_run"]
 gmail_authorized = gmail_is_authorized()
+outlook_authorized = outlook_is_authorized()
 active_provider = st.session_state["mailbox_provider"]
-connected = gmail_authorized if active_provider == "gmail" else st.session_state["demo_mailbox_connected"]
+connected = (
+    gmail_authorized if active_provider == "gmail"
+    else outlook_authorized if active_provider == "outlook"
+    else st.session_state["demo_mailbox_connected"]
+)
 mailbox_status = (
     "Gmail connected" if active_provider == "gmail" and gmail_authorized
+    else "Outlook connected" if active_provider == "outlook" and outlook_authorized
     else "Demo connected" if connected
     else "Not connected"
 )
@@ -336,7 +351,11 @@ with agent_tab:
     st.subheader("Connect once. Let the agent watch the inbox.")
     st.caption("The agent fetches new messages, ignores unrelated mail, merges course updates and asks for approval before any calendar write.")
 
-    connector_name = "Gmail · read only" if active_provider == "gmail" and gmail_authorized else "Local demo mailbox"
+    connector_name = (
+        "Gmail · read only" if active_provider == "gmail" and gmail_authorized
+        else "Outlook · read only" if active_provider == "outlook" and outlook_authorized
+        else "Local demo mailbox"
+    )
     st.markdown(
         '<div class="agent-grid">'
         f'<div class="agent-card"><span>Mailbox</span><b>{"Connected" if connected else "Not connected"}</b><small>{connector_name if connected else "Choose a connector to begin"}</small></div>'
@@ -345,7 +364,7 @@ with agent_tab:
         '</div>',
         unsafe_allow_html=True,
     )
-    connect_col, gmail_col, run_col, real_col = st.columns(4)
+    connect_col, gmail_col, outlook_col = st.columns(3)
     if connect_col.button(
         "Using demo mailbox" if connected and active_provider == "demo" else "Use demo mailbox",
         type="secondary",
@@ -366,55 +385,122 @@ with agent_tab:
         st.session_state["mailbox_provider"] = "gmail"
         st.session_state["agent_run"] = None
         st.rerun()
+    if outlook_col.button(
+        "Using Outlook" if connected and active_provider == "outlook" else "Use Outlook",
+        type="secondary",
+        use_container_width=True,
+        disabled=not outlook_authorized or (connected and active_provider == "outlook"),
+        help="Outlook access is read only.",
+    ):
+        st.session_state["mailbox_provider"] = "outlook"
+        st.session_state["agent_run"] = None
+        st.rerun()
+    run_col, real_col = st.columns([2, 1])
     if run_col.button("Run inbox agent now", type="primary", use_container_width=True, disabled=not connected):
         try:
-            connector = GmailMailboxConnector() if active_provider == "gmail" else DemoMailboxConnector()
+            connector = (
+                GmailMailboxConnector() if active_provider == "gmail"
+                else OutlookMailboxConnector() if active_provider == "outlook"
+                else DemoMailboxConnector()
+            )
             st.session_state["agent_run"] = InboxAgent(connector).run(
                 now=datetime.now().astimezone()
             )
             st.rerun()
         except Exception as exc:
             st.error(f"Mailbox run failed: {exc}")
-    if real_col.button("Set up Gmail", type="secondary", use_container_width=True):
+    if real_col.button("Mailbox setup", type="secondary", use_container_width=True):
         st.session_state["show_mailbox_setup"] = not st.session_state.get("show_mailbox_setup", False)
 
     if st.session_state.get("show_mailbox_setup"):
-        st.markdown("#### Gmail read-only setup")
-        st.caption("AI Scroll requests only `gmail.readonly`. It cannot send, delete or modify email.")
-        setup_left, setup_right = st.columns([1.45, 1])
-        with setup_left:
-            st.markdown(
-                "1. In Google Cloud, enable **Gmail API**.\n"
-                "2. Configure the OAuth consent screen and add your Google account as a test user.\n"
-                "3. Create an **OAuth client ID → Desktop app** and download the JSON.\n"
-                "4. Save it at the private path shown here, then start authorization."
-            )
-            st.code(str(client_secrets_path()), language=None)
-            st.link_button(
-                "Open Google Cloud credentials",
-                "https://console.cloud.google.com/apis/credentials",
-                use_container_width=True,
-            )
-        with setup_right:
-            secret_ready = client_secrets_path().is_file()
-            st.metric("OAuth client file", "Ready" if secret_ready else "Missing")
-            st.metric("Gmail token", "Authorized" if gmail_authorized else "Not authorized")
-            if st.button(
-                "Start Gmail authorization",
-                type="primary",
-                use_container_width=True,
-                disabled=not secret_ready or gmail_authorized,
-            ):
-                creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
-                subprocess.Popen(
-                    [sys.executable, str(ROOT / "scripts" / "authorize_gmail.py")],
-                    cwd=str(ROOT),
-                    creationflags=creation_flags,
+        st.markdown("#### Read-only mailbox setup")
+        gmail_setup, outlook_setup = st.tabs(["Gmail", "Outlook / Microsoft 365"])
+        with gmail_setup:
+            st.caption("AI Scroll requests only `gmail.readonly`. It cannot send, delete or modify email.")
+            setup_left, setup_right = st.columns([1.45, 1])
+            with setup_left:
+                st.markdown(
+                    "1. In Google Cloud, enable **Gmail API**.\n"
+                    "2. Configure the OAuth consent screen and add your Google account as a test user.\n"
+                    "3. Create an **OAuth client ID → Desktop app** and download the JSON.\n"
+                    "4. Save it at the private path shown here, then start authorization."
                 )
-                st.info("Google authorization opened in your browser. After allowing read-only access, select Refresh status.")
-            if st.button("Refresh authorization status", use_container_width=True):
-                st.rerun()
-            st.caption(f"Token location: {gmail_token_path()}")
+                st.code(str(client_secrets_path()), language=None)
+                st.link_button(
+                    "Open Google Cloud credentials",
+                    "https://console.cloud.google.com/apis/credentials",
+                    use_container_width=True,
+                )
+            with setup_right:
+                secret_ready = client_secrets_path().is_file()
+                st.metric("OAuth client file", "Ready" if secret_ready else "Missing")
+                st.metric("Gmail token", "Authorized" if gmail_authorized else "Not authorized")
+                if st.button(
+                    "Start Gmail authorization",
+                    type="primary",
+                    use_container_width=True,
+                    disabled=not secret_ready or gmail_authorized,
+                ):
+                    creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+                    subprocess.Popen(
+                        [sys.executable, str(ROOT / "scripts" / "authorize_gmail.py")],
+                        cwd=str(ROOT),
+                        creationflags=creation_flags,
+                    )
+                    st.info("Google authorization opened in your browser. After allowing read-only access, select Refresh status.")
+                if st.button("Refresh Gmail status", use_container_width=True):
+                    st.rerun()
+                st.caption(f"Token location: {gmail_token_path()}")
+        with outlook_setup:
+            st.caption("AI Scroll requests Microsoft Graph `Mail.Read`. It cannot send, delete or modify email.")
+            outlook_left, outlook_right = st.columns([1.45, 1])
+            with outlook_left:
+                st.markdown(
+                    "1. Open Microsoft Entra and create an **App registration**.\n"
+                    "2. Add **Mobile and desktop applications** with `http://localhost`.\n"
+                    "3. Enable **Allow public client flows**.\n"
+                    "4. Add delegated Microsoft Graph permission **Mail.Read**.\n"
+                    "5. Copy the Application (client) ID below."
+                )
+                st.link_button(
+                    "Open Microsoft app registrations",
+                    "https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade",
+                    use_container_width=True,
+                )
+                configured_client = microsoft_client_id()
+                entered_client = st.text_input(
+                    "Application (client) ID",
+                    value=configured_client,
+                    placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                )
+                entered_tenant = st.text_input(
+                    "Directory (tenant) ID",
+                    value=microsoft_tenant_id(),
+                    help="Use the NTU tenant ID when the app is registered inside the university tenant.",
+                )
+                if st.button("Save Microsoft app settings", use_container_width=True, disabled=not entered_client.strip()):
+                    save_microsoft_config(entered_client, entered_tenant)
+                    st.success(f"Saved locally to {microsoft_config_path()}")
+                    st.rerun()
+            with outlook_right:
+                st.metric("Microsoft app", "Configured" if microsoft_client_id() else "Missing")
+                st.metric("Outlook token", "Authorized" if outlook_authorized else "Not authorized")
+                if st.button(
+                    "Start Outlook authorization",
+                    type="primary",
+                    use_container_width=True,
+                    disabled=not microsoft_client_id() or outlook_authorized,
+                ):
+                    creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+                    subprocess.Popen(
+                        [sys.executable, str(ROOT / "scripts" / "authorize_outlook.py")],
+                        cwd=str(ROOT),
+                        creationflags=creation_flags,
+                    )
+                    st.info("Microsoft authorization opened in your browser. Sign in with the student account, allow Mail.Read, then refresh status.")
+                if st.button("Refresh Outlook status", use_container_width=True):
+                    st.rerun()
+                st.caption(f"Token location: {microsoft_token_path()}")
 
     agent_run = st.session_state.get("agent_run")
     if agent_run is None:

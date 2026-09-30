@@ -159,7 +159,51 @@ st.markdown(
     .stButton > button[kind="primary"] {background:var(--brand); border-color:var(--brand); border-radius:11px; min-height:46px; font-weight:750;}
     .stButton > button[kind="secondary"] {border-radius:11px; min-height:43px; background:white !important; color:var(--ink) !important; border:1px solid #cfd6e5 !important;}
     .stButton > button[kind="secondary"]:disabled {background:#eef1f6 !important; color:#7a8498 !important;}
-    .stTextInput input, .stTextArea textarea, .stSelectbox > div > div {border-radius:11px !important; border-color:#d9deea !important; background:white !important;}
+    [data-testid="stExpander"] {
+      color-scheme:light;
+      background:#ffffff !important;
+      border:1px solid #d9deea !important;
+      border-radius:12px !important;
+      overflow:hidden;
+    }
+    [data-testid="stExpander"] details,
+    [data-testid="stExpander"] [data-testid="stExpanderDetails"] {
+      background:#ffffff !important;
+      color:var(--ink) !important;
+    }
+    [data-testid="stExpander"] summary {
+      background:#f8fafc !important;
+      color:var(--ink) !important;
+    }
+    [data-testid="stExpander"] summary:hover {background:#f1f4f9 !important;}
+    [data-testid="stExpander"] summary *,
+    [data-testid="stExpander"] summary svg {
+      color:var(--ink) !important;
+      fill:var(--ink) !important;
+    }
+    [data-testid="stWidgetLabel"] p,
+    .stTextInput label,
+    .stTextInput label p {
+      color:#344054 !important;
+      font-weight:700 !important;
+    }
+    .stTextInput input,
+    .stTextArea textarea,
+    .stSelectbox > div > div {
+      color-scheme:light;
+      border-radius:11px !important;
+      border-color:#cbd2df !important;
+      background:#ffffff !important;
+      color:#14213d !important;
+      caret-color:#14213d !important;
+      -webkit-text-fill-color:#14213d !important;
+    }
+    .stTextInput input::placeholder,
+    .stTextArea textarea::placeholder {
+      color:#8a94a6 !important;
+      -webkit-text-fill-color:#8a94a6 !important;
+      opacity:1 !important;
+    }
     .before {color:#8b3a3a; text-decoration:line-through;}
     .after {color:#176b52; font-weight:700;}
     @media (max-width:900px) {

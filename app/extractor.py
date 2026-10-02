@@ -18,7 +18,7 @@ from app.models import EmailInput, ExtractedTask
 load_local_env()
 
 
-PROMPT_VERSION = "v1.0"
+PROMPT_VERSION = "v1.1"
 COURSE_PATTERN = re.compile(r"\b[A-Z]{2,4}\d{4}[A-Z]?\b")
 ACTION_PATTERN = re.compile(
     r"\b(due|deadline|submit|submitted|upload|complete|post|send|bring|exam|quiz|"
@@ -142,10 +142,45 @@ def _live_prompt(email: EmailInput) -> str:
     return (
         "Extract one academic task from the email. Copy evidence_quote verbatim. "
         "Use null when a deadline is missing. Set needs_clarification=true when the "
-        "date, time, task, or time zone is unsafe to infer. Return JSON only.\n\n"
+        "date, time, task, or time zone is unsafe to infer. A platform availability window "
+        "(available until / not available until) is not an assessed due date. A scheduled "
+        "publication or post time is not an assignment due date. For those platform metadata "
+        "cases use deadline_iso=null, urgency=low, calendar_action=do_not_create and "
+        "needs_clarification=false unless a separate explicit due date is present. When "
+        "needs_clarification=true, deadline_iso must be null. Return JSON only.\n\n"
         f"Schema:\n{json.dumps(schema, ensure_ascii=False)}\n\n"
         f"Subject: {email.subject}\nSender: {email.sender}\nBody:\n{email.body}"
     )
+
+
+def enforce_live_safety(task: ExtractedTask, email: EmailInput) -> ExtractedTask:
+    """Apply deterministic calendar safety rules after model extraction."""
+    source_text = f"{email.subject}\n{email.body}"
+    lowered = f" {source_text} ".lower()
+    course_match = COURSE_PATTERN.search(source_text)
+    trusted_fields = {
+        "email_id": stable_id("email", f"{email.subject}|{email.sender}|{email.body}"),
+        "source_subject": email.subject,
+    }
+    if course_match:
+        trusted_fields["course"] = course_match.group(0)
+    task = task.model_copy(update=trusted_fields)
+    platform_metadata_only = (
+        "scheduled to post" in lowered
+        or "not available until" in lowered
+        or ("available until" in lowered and " due " not in lowered)
+    )
+    if platform_metadata_only:
+        return task.model_copy(update={
+            "deadline_iso": None,
+            "urgency": "low",
+            "calendar_action": "do_not_create",
+            "needs_clarification": False,
+            "clarification_reason": None,
+        })
+    if task.needs_clarification and task.deadline_iso is not None:
+        return task.model_copy(update={"deadline_iso": None})
+    return task
 
 
 def live_extract(email: EmailInput) -> tuple[ExtractedTask, dict]:
@@ -158,6 +193,8 @@ def live_extract(email: EmailInput) -> tuple[ExtractedTask, dict]:
     payload = {
         "model": model,
         "temperature": 0,
+        "max_tokens": 1600,
+        "reasoning": {"effort": "minimal"},
         "messages": [
             {"role": "system", "content": "You are a precise academic email extraction service."},
             {"role": "user", "content": _live_prompt(email)},
@@ -179,8 +216,15 @@ def live_extract(email: EmailInput) -> tuple[ExtractedTask, dict]:
         raise RuntimeError(f"Model request failed ({exc.code}): {detail[:400]}") from exc
 
     latency_ms = round((time.perf_counter() - started) * 1000)
-    content = raw["choices"][0]["message"]["content"]
+    content = raw["choices"][0]["message"].get("content")
+    if not content:
+        finish_reason = raw["choices"][0].get("finish_reason", "unknown")
+        raise RuntimeError(
+            "The model returned no JSON content "
+            f"(finish_reason={finish_reason}). Please retry the scan."
+        )
     task = ExtractedTask.model_validate_json(content)
+    task = enforce_live_safety(task, email)
     if task.evidence_quote and task.evidence_quote not in email.body:
         raise ValueError("The model evidence quote does not appear verbatim in the source email.")
     usage = raw.get("usage", {})

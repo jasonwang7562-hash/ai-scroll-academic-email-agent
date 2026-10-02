@@ -1,0 +1,32 @@
+{
+  "run_date": "2026-10-03",
+  "model": "openai/gpt-5-mini",
+  "connector": "Local demo mailbox",
+  "scanned": 5,
+  "academic": 4,
+  "ignored": 1,
+  "timeline_count": 2,
+  "review_required": 1,
+  "calendar_write_performed": false,
+  "duration_ms": 9561,
+  "timeline": [
+    {
+      "course": "PE6201",
+      "task_title": "PE6201 project",
+      "deadline_iso": "2026-10-04T23:59:00+08:00",
+      "status": "active",
+      "calendar_action": "update",
+      "source_email_count": 2,
+      "change_count": 1
+    },
+    {
+      "course": "HR6102",
+      "task_title": "Research workshop",
+      "deadline_iso": null,
+      "status": "cancelled",
+      "calendar_action": "do_not_create",
+      "source_email_count": 2,
+      "change_count": 1
+    }
+  ]
+}

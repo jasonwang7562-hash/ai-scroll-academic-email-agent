@@ -24,6 +24,8 @@ The planning slice turns a verified DDL into reviewable study sessions. It estim
 
 The default Demo mode is deterministic and requires no API key. Live model mode supports an OpenAI-compatible chat-completions endpoint through environment variables or the local bilingual setup panel. Mailbox Agent runs now use the selected extraction mode, so choosing Live model applies the configured model to the retained course emails before consolidation.
 
+The latest live smoke check used `openai/gpt-5-mini` through OpenRouter. It passed 6/6 public-source edge cases and completed the full demo mailbox flow: five messages scanned, one unrelated message excluded, four course messages merged into two timeline items, and one actionable item held for human approval. See `docs/WEB_RESEARCH_TESTS.md` and `04_evaluation/outputs/` for the inspectable records.
+
 The fourth app tab shows the latest provisional offline comparison against a simple keyword/date baseline. It is visibly marked as non-final while labels await human review.
 
 The **Label review** tab is the required next step before a formal model run. It presents each source email beside its draft labels, validates evidence and safe clarification rules, and writes approvals to the local review CSV. The freeze script remains blocked until all 50 cases are approved.

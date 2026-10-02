@@ -75,6 +75,7 @@ st.markdown(
     .workspace-brand {font-size:1.35rem; font-weight:850; color:var(--ink); letter-spacing:-.025em;}
     .workspace-brand span {color:var(--brand);}
     .workspace-sub {font-size:.76rem; color:var(--muted); margin-top:1px;}
+    .info-dot {display:inline-flex !important; align-items:center; justify-content:center; width:17px; height:17px; margin-left:4px; border-radius:50%; border:1px solid #c7cfdf; background:#f8f9fc; color:#59667d !important; font-size:.65rem !important; font-weight:850; line-height:1; cursor:help; vertical-align:1px; text-transform:none !important; letter-spacing:0 !important;}
     .sync-pill {display:inline-flex; align-items:center; gap:7px; background:white; border:1px solid var(--line); border-radius:999px; padding:7px 11px; color:#46536a; font-size:.74rem; font-weight:750;}
     .sync-dot {width:8px; height:8px; border-radius:50%; background:var(--teal); box-shadow:0 0 0 4px rgba(22,138,120,.1);}
     .sync-dot.off {background:#98a2b3; box-shadow:0 0 0 4px rgba(152,162,179,.12);}
@@ -88,7 +89,7 @@ st.markdown(
     .focus-tag {background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.13); border-radius:999px; padding:5px 9px; color:#edf1ff; font-size:.68rem; font-weight:700;}
     .activity-card {border:1px solid var(--line); border-radius:22px; background:white; padding:18px 19px; box-shadow:0 10px 28px rgba(20,33,61,.05);}
     .activity-head {display:flex; justify-content:space-between; align-items:center; gap:10px; color:var(--ink); font-size:.86rem; font-weight:800; margin-bottom:14px;}
-    .activity-head span {font-size:.63rem; color:var(--teal); background:var(--teal-soft); border-radius:999px; padding:4px 8px; text-transform:uppercase; letter-spacing:.06em;}
+    .activity-head > .state-pill {font-size:.63rem; color:var(--teal); background:var(--teal-soft); border-radius:999px; padding:4px 8px; text-transform:uppercase; letter-spacing:.06em;}
     .activity-stat {display:grid; grid-template-columns:40px 1fr; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid #eef1f6;}
     .activity-stat:last-of-type {border-bottom:0;}
     .activity-stat b {font-size:1.18rem; color:var(--ink);}
@@ -220,6 +221,18 @@ st.markdown(
       -webkit-text-fill-color:#8a94a6 !important;
       opacity:1 !important;
     }
+    [data-testid="stPopover"] > button {border-radius:11px !important; border:1px solid #3b4b79 !important; background:#1a2449 !important; color:#f5f7ff !important; font-weight:750 !important;}
+    [data-testid="stPopover"] > button:hover {background:#26335f !important; border-color:#53649b !important;}
+    .help-fab {position:fixed; right:24px; bottom:24px; z-index:9999;}
+    .help-fab details {position:relative;}
+    .help-fab summary {display:flex; align-items:center; justify-content:center; width:46px; height:46px; border-radius:50%; list-style:none; cursor:pointer; background:var(--brand); color:white; border:3px solid white; box-shadow:0 10px 28px rgba(20,33,61,.28); font-size:1.15rem; font-weight:900;}
+    .help-fab summary::-webkit-details-marker {display:none;}
+    .help-fab details[open] summary {background:#3448bd;}
+    .help-fab-panel {position:absolute; right:0; bottom:58px; width:292px; border:1px solid #dce2ef; border-radius:16px; background:white; color:var(--ink); padding:15px 16px; box-shadow:0 18px 48px rgba(20,33,61,.22);}
+    .help-fab-panel b {display:block; font-size:.92rem; margin-bottom:8px;}
+    .help-fab-step {display:grid; grid-template-columns:22px 1fr; gap:8px; align-items:start; padding:6px 0; color:#536078; font-size:.73rem; line-height:1.35;}
+    .help-fab-step span {display:flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:6px; background:var(--brand-soft); color:#4256c9; font-size:.65rem; font-weight:850;}
+    .help-fab-note {border-top:1px solid #edf0f5; margin-top:7px; padding-top:9px; color:#748096; font-size:.68rem; line-height:1.4;}
     .before {color:#8b3a3a; text-decoration:line-through;}
     .after {color:#176b52; font-weight:700;}
     @media (max-width:900px) {
@@ -235,6 +248,8 @@ st.markdown(
       .flow-arrow{transform:rotate(90deg)}
       [data-testid="stHorizontalBlock"]{flex-wrap:wrap !important;}
       [data-testid="stColumn"]{min-width:280px !important; flex:1 1 100% !important;}
+      .help-fab{right:14px;bottom:14px}
+      .help-fab-panel{width:270px}
     }
     </style>
     """,
@@ -404,7 +419,7 @@ st.markdown(
     <div class="workspace-head">
       <div>
         <div class="workspace-brand">AI <span>Scroll</span></div>
-        <div class="workspace-sub">Academic command center · evidence before action</div>
+        <div class="workspace-sub">Academic command center · evidence before action <span class="info-dot" title="AI Scroll keeps the original email evidence visible before it proposes an external action.">?</span></div>
       </div>
       <div class="sync-pill"><span class="sync-dot{connection_class}"></span>{html.escape(mailbox_status)}</div>
     </div>
@@ -420,7 +435,7 @@ st.markdown(
         </div>
       </section>
       <aside class="activity-card">
-        <div class="activity-head">Agent activity <span>{agent_state_label}</span></div>
+        <div class="activity-head"><div>Agent activity <span class="info-dot" title="Shows what the latest mailbox scan inspected, consolidated and left for review.">?</span></div><span class="state-pill">{agent_state_label}</span></div>
         <div class="activity-stat"><b>{scanned_count}</b><span>messages inspected in the latest run</span></div>
         <div class="activity-stat"><b>{prepared_count}</b><span>course items consolidated for review</span></div>
         <div class="activity-stat"><b>{attention_count}</b><span>items waiting for your decision</span></div>
@@ -430,7 +445,26 @@ st.markdown(
     <div class="quick-strip">
       <div class="quick-card"><div><span>Next deadline</span><b>{next_deadline_title}</b></div><div class="quick-value">{next_deadline_value}</div></div>
       <div class="quick-card"><div><span>Course scope</span><b>{scope_display}</b></div><div class="quick-value">{len([c for c in st.session_state['course_scope'].split(',') if c.strip()])}</div></div>
-      <div class="quick-card"><div><span>Review queue</span><b>Evidence required before action</b></div><div class="quick-value">{attention_count}</div></div>
+      <div class="quick-card"><div><span>Review queue <span class="info-dot" title="Items waiting for you to verify the source evidence before a calendar action.">?</span></span><b>Evidence required before action</b></div><div class="quick-value">{attention_count}</div></div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    """
+    <div class="help-fab">
+      <details>
+        <summary title="Open quick help" aria-label="Open quick help">?</summary>
+        <div class="help-fab-panel">
+          <b>How to use AI Scroll</b>
+          <div class="help-fab-step"><span>1</span><div>Connect the demo or a read-only mailbox.</div></div>
+          <div class="help-fab-step"><span>2</span><div>Run the agent to filter and merge course mail.</div></div>
+          <div class="help-fab-step"><span>3</span><div>Review the task and its exact source evidence.</div></div>
+          <div class="help-fab-step"><span>4</span><div>Approve only the correct calendar proposal.</div></div>
+          <div class="help-fab-note">Nothing is written to a calendar until you explicitly approve it. Open “Help &amp; guide” in the sidebar for definitions.</div>
+        </div>
+      </details>
     </div>
     """,
     unsafe_allow_html=True,
@@ -439,6 +473,22 @@ st.markdown(
 with st.sidebar:
     st.markdown("## AI Scroll")
     st.caption("Evidence-backed academic planning")
+    with st.popover("❔ Help & guide", use_container_width=True):
+        st.markdown("#### Quick start")
+        st.markdown(
+            "1. **Connect** the demo or a read-only mailbox.\n"
+            "2. **Run** the inbox agent.\n"
+            "3. **Review** the extracted task and exact email evidence.\n"
+            "4. **Approve** an eligible calendar proposal."
+        )
+        st.markdown("#### What the labels mean")
+        st.markdown(
+            "- **Timeline item:** one consolidated course task.\n"
+            "- **Review queue:** proposals waiting for your decision.\n"
+            "- **Unauthorized writes:** calendar changes made without approval; this must remain zero.\n"
+            "- **Demo:** runs locally without an API key or mailbox access."
+        )
+        st.caption("Hover over any small ? for contextual help.")
     st.divider()
     st.markdown("### Workspace")
     mode = st.radio("Extraction mode", ["Demo", "Live model"], help="Demo requires no API key.")

@@ -35,6 +35,7 @@ Reviewed 2 October 2026. This round combines student-built planners, established
 5. **Keep source and action traceable.** AI output must retain its course, source email and evidence before the user approves a calendar change.
 6. **Separate prepared work from completed work.** A proposal waiting for review must never look scheduled.
 7. **Prefer calm density.** Compact cards, restrained colour and clear labels beat decorative charts for this use case.
+8. **Explain unfamiliar automation in place.** Short labels stay readable while contextual help and a short guided workflow remain one click away.
 
 ## Patterns adopted in AI Scroll
 
@@ -44,6 +45,7 @@ Reviewed 2 October 2026. This round combines student-built planners, established
 - Put agent activity beside the focus card: scanned mail, prepared items and review count.
 - Keep a permanent zero-unauthorized-write indicator in the primary view.
 - Add a compact strip for the next deadline, course scope and review queue.
+- Add a persistent question-mark help entry, a four-step quick-start guide and contextual tooltips for evidence, agent activity and the review queue.
 - Preserve the existing evidence, merge history and approval controls in their detailed views.
 
 ## Patterns deliberately excluded
@@ -52,4 +54,3 @@ Reviewed 2 October 2026. This round combines student-built planners, established
 - Automatic rescheduling is outside the frozen project scope.
 - Chat is not the homepage because the core value is proactive inbox processing rather than another general prompt box.
 - Confidence percentages remain excluded until a calibrated confidence measure exists.
-

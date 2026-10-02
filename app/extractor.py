@@ -84,9 +84,16 @@ def demo_extract(email: EmailInput, now=None) -> ExtractedTask:
     informational = any(
         term in lowered for term in ("optional", "no submission requirement", "resources are now available")
     )
+    platform_metadata_only = (
+        "scheduled to post" in lowered
+        or "not available until" in lowered
+        or ("available until" in lowered and " due " not in f" {lowered} ")
+    )
+    informational = informational or platform_metadata_only
     has_action = (deadline_iso is not None or bool(ACTION_PATTERN.search(source_text))) and not informational
+    update_context = f"{email.subject}\n{evidence}".lower()
     is_update = any(
-        term in lowered
+        term in update_context
         for term in (
             "extended", "moved", "instead of", "corrected", "remains",
             "reminder:", "no longer applies", "must now include",

@@ -22,7 +22,7 @@ The second working slice accepts a related email chain and returns one timeline 
 
 The planning slice turns a verified DDL into reviewable study sessions. It estimates effort by task type, keeps a configurable submission buffer, schedules milestones backwards, avoids existing calendar events and requires a second explicit approval before writing the sessions. The Agent workspace also exposes a concise ReAct-style tool trace for mailbox read, scope filtering, extraction/merge and the approval stop.
 
-The default Demo mode is deterministic and requires no API key. Live model mode supports an OpenAI-compatible chat-completions endpoint through environment variables.
+The default Demo mode is deterministic and requires no API key. Live model mode supports an OpenAI-compatible chat-completions endpoint through environment variables or the local bilingual setup panel. Mailbox Agent runs now use the selected extraction mode, so choosing Live model applies the configured model to the retained course emails before consolidation.
 
 The fourth app tab shows the latest provisional offline comparison against a simple keyword/date baseline. It is visibly marked as non-final while labels await human review.
 

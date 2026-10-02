@@ -11,7 +11,11 @@ import urllib.request
 from pathlib import Path
 
 from app.date_validation import parse_deadline, urgency_for
+from app.live_config import load_local_env
 from app.models import EmailInput, ExtractedTask
+
+
+load_local_env()
 
 
 PROMPT_VERSION = "v1.0"

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from app.extractor import demo_extract
+from app.extractor import extract
 from app.models import ChangeRecord, EmailInput, EvidenceRecord, ExtractedTask, TimelineItem
 from app.thread_matcher import best_match
 
@@ -85,15 +85,14 @@ def apply_update(item: TimelineItem, task: ExtractedTask) -> TimelineItem:
     return result
 
 
-def build_timeline(emails: list[EmailInput], now=None) -> list[TimelineItem]:
+def build_timeline(emails: list[EmailInput], now=None, mode: str = "Demo") -> list[TimelineItem]:
     ordered = sorted(emails, key=lambda email: email.sent_at or "")
     timeline: list[TimelineItem] = []
     for email in ordered:
-        task = demo_extract(email, now=now)
+        task = extract(email, mode=mode, now=now)
         index, _score = best_match(email, timeline)
         if index is None or (task.relation_to_previous == "new" and index is None):
             timeline.append(new_timeline_item(task))
         else:
             timeline[index] = apply_update(timeline[index], task)
     return timeline
-

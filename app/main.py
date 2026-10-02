@@ -33,6 +33,7 @@ from app.label_review import (
     CALENDAR_ACTIONS, RELATIONS, TASK_TYPES, URGENCIES, load_jsonl, load_review_rows,
     review_progress, save_review_row, validate_review,
 )
+from app.live_config import live_model_status, save_live_model_config
 from app.merge_engine import build_timeline
 from app.models import CalendarProposal, EmailInput, TimelineItem
 from app.outlook_connector import (
@@ -690,6 +691,22 @@ with st.sidebar:
     st.divider()
     st.markdown("### Workspace")
     mode = st.radio("Extraction mode", ["Demo", "Live model"], help="Demo requires no API key.")
+    live_status = live_model_status()
+    with st.expander("Live model setup / 在线模型设置", expanded=mode == "Live model" and not live_status["configured"]):
+        st.caption("Saved only in the local Git-ignored .env file. / 仅保存在本机且不会提交到 Git。")
+        st.markdown(
+            f'**Status / 状态:** {"✓ Configured / 已配置" if live_status["configured"] else "Not configured / 未配置"}'
+        )
+        live_key = st.text_input("OpenRouter API Key", type="password", placeholder="sk-or-v1-...")
+        live_base = st.text_input("Base URL", value=str(live_status["base_url"]))
+        live_model = st.text_input("Model", value=str(live_status["model"]))
+        if st.button("Save Live model settings / 保存在线模型设置", use_container_width=True):
+            try:
+                save_live_model_config(live_key, live_base, live_model)
+                st.success("Live model configuration saved locally. / 在线模型配置已保存在本机。")
+                st.rerun()
+            except ValueError as exc:
+                st.error(str(exc))
     st.info("Calendar proposals remain local until you explicitly confirm them.")
     with st.expander("Urgency policy"):
         st.markdown("- **High:** within 72 hours\n- **Medium:** 4–7 days\n- **Low:** more than 7 days\n- **Clarification:** unsafe to infer")
@@ -853,7 +870,7 @@ with agent_tab:
                 if course.strip()
             }
             st.session_state["agent_run"] = InboxAgent(
-                connector, allowed_courses=allowed_courses
+                connector, allowed_courses=allowed_courses, extraction_mode=mode
             ).run(
                 now=datetime.now().astimezone()
             )

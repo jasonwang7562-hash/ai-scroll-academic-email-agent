@@ -89,9 +89,16 @@ class AgentRunResult:
 
 
 class InboxAgent:
-    def __init__(self, connector: MailboxConnector, *, allowed_courses: set[str] | None = None):
+    def __init__(
+        self,
+        connector: MailboxConnector,
+        *,
+        allowed_courses: set[str] | None = None,
+        extraction_mode: str = "Demo",
+    ):
         self.connector = connector
         self.allowed_courses = {course.upper() for course in allowed_courses or set()}
+        self.extraction_mode = extraction_mode
 
     def run(self, *, now: datetime | None = None) -> AgentRunResult:
         started = perf_counter()
@@ -101,7 +108,7 @@ class InboxAgent:
             message for message, decision in zip(messages, decisions)
             if decision.decision == "process"
         ]
-        timeline = build_timeline(academic, now=now)
+        timeline = build_timeline(academic, now=now, mode=self.extraction_mode)
         review_required = sum(
             item.calendar_action in {"create", "update", "ask_clarification"}
             for item in timeline
@@ -128,7 +135,10 @@ class InboxAgent:
                 AgentTraceStep(
                     phase="Act",
                     tool="timeline.extract_and_merge",
-                    result=f"Consolidated the retained mail into {len(timeline)} timeline items.",
+                    result=(
+                        f"Used {self.extraction_mode} extraction and consolidated the retained mail "
+                        f"into {len(timeline)} timeline items."
+                    ),
                 ),
                 AgentTraceStep(
                     phase="Observe",

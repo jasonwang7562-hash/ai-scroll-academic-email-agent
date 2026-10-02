@@ -35,18 +35,18 @@ class BackwardPlan:
 
 STAGES = {
     "assignment": (
-        ("Understand the brief", 0.10, "Confirm the deliverables, rubric and source requirements."),
-        ("Research and outline", 0.25, "Collect evidence and decide the structure."),
-        ("Build the first draft", 0.40, "Complete the main written or technical work."),
-        ("Revise and verify", 0.18, "Check correctness, evidence and presentation quality."),
-        ("Final submission check", 0.07, "Export, name and verify every submission file."),
+        ("Understand the brief / 理解作业要求", 0.10, "Confirm deliverables and rubric. / 确认交付内容和评分标准。"),
+        ("Research and outline / 调研并列出提纲", 0.25, "Collect evidence and decide the structure. / 收集证据并确定结构。"),
+        ("Build the first draft / 完成第一版", 0.40, "Complete the main written or technical work. / 完成主要写作或技术工作。"),
+        ("Revise and verify / 修改并核查", 0.18, "Check correctness, evidence and presentation. / 检查准确性、证据和展示效果。"),
+        ("Final submission check / 最终提交检查", 0.07, "Export, name and verify every file. / 导出、命名并检查全部文件。"),
     ),
     "exam": (
-        ("Map the syllabus", 0.10, "Identify examinable topics and weak areas."),
-        ("Review core material", 0.35, "Revisit notes and required readings."),
-        ("Practice questions", 0.35, "Complete timed or representative questions."),
-        ("Fix weak areas", 0.15, "Review errors and repeat difficult topics."),
-        ("Final review", 0.05, "Prepare a concise final revision pass."),
+        ("Map the syllabus / 梳理考试范围", 0.10, "Identify topics and weak areas. / 确定考试内容和薄弱部分。"),
+        ("Review core material / 复习核心材料", 0.35, "Revisit notes and readings. / 复习笔记和指定阅读。"),
+        ("Practice questions / 完成练习题", 0.35, "Complete timed practice. / 完成计时练习。"),
+        ("Fix weak areas / 补强薄弱部分", 0.15, "Review errors and difficult topics. / 检查错误并重做难点。"),
+        ("Final review / 最终复习", 0.05, "Complete a concise final pass. / 完成最后一轮简要复习。"),
     ),
 }
 

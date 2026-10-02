@@ -401,6 +401,20 @@ st.markdown(
     .agent-card:last-child {border-right:1px solid #dce4eb;}
     .result-card,.rail-card,.source-context,.flow-card,.policy-card {border-radius:13px; box-shadow:0 6px 18px rgba(34,58,80,.04);}
     .connect-guide {background:linear-gradient(135deg,#f2f8f7,#f7fafc); border-color:#cfe1df; border-radius:16px;}
+    .guided-shell {border:1px solid #cfe0e7; border-radius:18px; background:linear-gradient(135deg,#fff,#f2f8f8); padding:18px; margin:.5rem 0 1.25rem; box-shadow:0 8px 24px rgba(34,58,80,.05);}
+    .guided-head {display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:14px;}
+    .guided-head b {display:block; color:#17344e; font-size:1rem;}
+    .guided-head span {display:block; color:#748397; font-size:.72rem; margin-top:3px;}
+    .guided-progress {white-space:nowrap; border-radius:999px; background:#e5f3ef; color:#17695f; padding:6px 10px; font-size:.68rem; font-weight:800;}
+    .guided-steps {display:grid; grid-template-columns:repeat(4,1fr); gap:9px;}
+    .guided-step {position:relative; min-height:92px; border:1px solid #dde6ec; border-radius:13px; background:#fff; padding:12px;}
+    .guided-step i {display:flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:#eaf0f4; color:#607286; font-size:.68rem; font-style:normal; font-weight:850; margin-bottom:8px;}
+    .guided-step b {display:block; color:#26364c; font-size:.75rem; line-height:1.3;}
+    .guided-step span {display:block; color:#8290a1; font-size:.65rem; line-height:1.35; margin-top:4px;}
+    .guided-step.done {border-color:#c9e2dc; background:#f4faf8;}
+    .guided-step.done i {background:#21786d; color:#fff;}
+    .guided-step.active {border-color:#2c667f; box-shadow:0 0 0 2px rgba(44,102,127,.09);}
+    .guided-step.active i {background:#173f5a; color:#fff;}
     @media (max-width:900px) {
       .workspace-head{align-items:flex-start}
       .today-grid{grid-template-columns:1fr}
@@ -412,6 +426,7 @@ st.markdown(
       .route{grid-template-columns:repeat(2,1fr)}
       .policy-grid{grid-template-columns:1fr}
       .approval-summary{grid-template-columns:1fr}
+      .guided-steps{grid-template-columns:1fr 1fr}
       .agent-grid{grid-template-columns:1fr}
       .chain-flow{grid-template-columns:1fr}
       .flow-arrow{transform:rotate(90deg)}
@@ -680,13 +695,63 @@ with st.sidebar:
         st.markdown("- **High:** within 72 hours\n- **Medium:** 4–7 days\n- **Low:** more than 7 days\n- **Clarification:** unsafe to infer")
 
 agent_tab, single_tab, chain_tab, safety_tab, evaluation_tab, review_tab = st.tabs(
-    ["Today", "Inbox", "Timeline", "Calendar review", "Evaluation", "Label review"]
+    [
+        "Today / 今日",
+        "Inbox / 邮件",
+        "Timeline / 时间线",
+        "Calendar review / 日历审核",
+        "Evaluation / 评估",
+        "Label review / 标签审核",
+    ]
 )
 
 with agent_tab:
     st.markdown('<div class="eyebrow">Inbox automation</div>', unsafe_allow_html=True)
-    st.subheader("Mailbox control center")
-    st.caption("Connect once, then AI Scroll can read new course mail without asking you to paste each message.")
+    st.subheader("Mailbox control center / 邮箱控制中心")
+    st.caption("Connect once, then AI Scroll reads course mail automatically. / 只需连接一次，AI Scroll 就会自动读取课程邮件。")
+
+    guide_agent_run = st.session_state.get("agent_run")
+    guide_plan_results = st.session_state.get("last_plan_results", [])
+    if guide_plan_results:
+        guide_step = 5
+    elif st.session_state.get("backward_plan"):
+        guide_step = 4
+    elif guide_agent_run is not None:
+        guide_step = 3
+    elif connected:
+        guide_step = 2
+    else:
+        guide_step = 1
+    guide_steps = [
+        ("Connect mailbox", "连接邮箱", "Choose Demo, Gmail or Outlook.", "选择演示、Gmail 或 Outlook。"),
+        ("Run inbox scan", "扫描邮箱", "Let the Agent find course tasks.", "让 Agent 查找课程任务。"),
+        ("Review evidence", "检查证据", "Open Calendar review and inspect the DDL.", "打开日历审核并检查 DDL。"),
+        ("Approve calendar plan", "确认日历计划", "Confirm only after checking every session.", "核对所有时段后再确认。"),
+    ]
+    guide_html = ""
+    for number, (en_title, zh_title, en_copy, zh_copy) in enumerate(guide_steps, start=1):
+        state = "done" if number < guide_step else "active" if number == guide_step else ""
+        icon = "✓" if number < guide_step else str(number)
+        guide_html += (
+            f'<div class="guided-step {state}"><i>{icon}</i>'
+            f'<b>{en_title}<br>{zh_title}</b>'
+            f'<span>{en_copy}<br>{zh_copy}</span></div>'
+        )
+    completed_steps = min(4, guide_step - 1)
+    st.markdown(
+        '<div class="guided-shell"><div class="guided-head"><div>'
+        '<b>Quick start · Follow these four steps / 快速开始 · 按照以下四步操作</b>'
+        '<span>The highlighted card is your next action. / 高亮卡片就是你现在要做的操作。</span>'
+        f'</div><div class="guided-progress">{completed_steps}/4 completed · 已完成</div></div>'
+        f'<div class="guided-steps">{guide_html}</div></div>',
+        unsafe_allow_html=True,
+    )
+    if guide_step == 2:
+        st.info("Next: select **Run inbox scan / 扫描邮箱** below. / 下一步：点击下方的 **Run inbox scan / 扫描邮箱**。")
+    elif guide_step == 3:
+        st.info("Next: open **Calendar review / 日历审核**, check the evidence and generate the backward plan. / 下一步：打开 **Calendar review / 日历审核**，检查证据并生成倒推计划。")
+    elif guide_step > 4:
+        st.success("Guided workflow completed. / 引导流程已经完成。")
 
     real_mailbox_connected = gmail_authorized or outlook_authorized
     if not connected:
@@ -737,7 +802,7 @@ with agent_tab:
             help="Comma-separated. Leave blank to process every detected course code.",
         )
         st.caption("Only the subject, sender and matched course codes are shown in the decision log; ignored message bodies are not displayed.")
-    st.markdown("#### 1 · Choose the mailbox source")
+    st.markdown("#### 1 · Choose the mailbox source / 选择邮箱来源")
     st.caption("Only authorized mailboxes can be selected. Use the connection guide if Outlook or Gmail is not ready yet.")
     connect_col, gmail_col, outlook_col = st.columns(3)
     if connect_col.button(
@@ -770,10 +835,13 @@ with agent_tab:
         st.session_state["mailbox_provider"] = "outlook"
         st.session_state["agent_run"] = None
         st.rerun()
-    st.markdown("#### 2 · Scan the inbox")
+    st.markdown("#### 2 · Scan the inbox / 扫描邮箱")
     run_col, real_col = st.columns([2, 1])
-    if run_col.button("Run inbox scan", type="primary", use_container_width=True, disabled=not connected):
+    if run_col.button("Run inbox scan / 扫描邮箱", type="primary", use_container_width=True, disabled=not connected):
         try:
+            st.session_state.pop("backward_plan", None)
+            st.session_state.pop("last_plan_results", None)
+            st.session_state.pop("last_calendar_result", None)
             connector = (
                 GmailMailboxConnector() if active_provider == "gmail"
                 else OutlookMailboxConnector() if active_provider == "outlook"
@@ -792,7 +860,7 @@ with agent_tab:
             st.rerun()
         except Exception as exc:
             st.error(f"Mailbox run failed: {exc}")
-    if real_col.button("Connection guide", type="secondary", use_container_width=True):
+    if real_col.button("Connection guide / 连接说明", type="secondary", use_container_width=True):
         st.session_state["show_mailbox_setup"] = not st.session_state.get("show_mailbox_setup", False)
 
     if st.session_state.get("show_mailbox_setup"):
@@ -925,8 +993,8 @@ with agent_tab:
         metric_cols[2].metric("Noise ignored", agent_run.ignored)
         metric_cols[3].metric("Needs review", agent_run.review_required)
         st.caption(f"Completed in {agent_run.duration_ms} ms · No ignored message body was sent to extraction.")
-        with st.expander("View Agent tool trace", expanded=True):
-            st.caption("A reviewable ReAct-style trace. It shows tool decisions and results without exposing private model reasoning.")
+        with st.expander("View Agent tool trace / 查看 Agent 工具轨迹", expanded=True):
+            st.caption("A reviewable ReAct-style trace showing tool decisions and results. / 可检查的 ReAct 风格轨迹，展示工具选择和执行结果。")
             for step in agent_run.trace:
                 st.markdown(
                     f"**{step.phase} · `{step.tool}`**  \n{step.result}"
@@ -1014,10 +1082,10 @@ with chain_tab:
 
 with safety_tab:
     st.markdown('<div class="section-label">Human approval gate</div>', unsafe_allow_html=True)
-    st.subheader("Review before any calendar action")
-    st.caption("Choose a case, inspect the proposed change and confirm only when its evidence is complete.")
+    st.subheader("Review before any calendar action / 写入日历前先审核")
+    st.caption("Choose a case, inspect the evidence, then confirm. / 选择案例、检查证据，然后再确认。")
 
-    st.markdown("#### Calendar connection")
+    st.markdown("#### Calendar connection / 日历连接")
     calendar_source_left, calendar_source_right = st.columns(2)
     if calendar_source_left.button(
         "Using simulated calendar" if st.session_state["calendar_provider"] == "demo" else "Use simulated calendar",
@@ -1033,7 +1101,7 @@ with safety_tab:
     ):
         st.session_state["calendar_provider"] = "google"
         st.rerun()
-    with st.expander("Connect Google Calendar", expanded=not calendar_authorized):
+    with st.expander("Connect Google Calendar / 连接 Google 日历", expanded=not calendar_authorized):
         st.markdown(
             "1. In Google Cloud, enable **Google Calendar API**.\n"
             "2. Create an **OAuth client ID → Desktop app** and download the JSON.\n"
@@ -1174,15 +1242,15 @@ with safety_tab:
             )
 
         st.markdown("---")
-        st.markdown('<div class="section-label">Smart backward plan</div>', unsafe_allow_html=True)
-        st.subheader("Turn the DDL into workable study sessions")
+        st.markdown('<div class="section-label">Smart backward plan · 智能倒推计划</div>', unsafe_allow_html=True)
+        st.subheader("Turn the DDL into workable study sessions / 根据 DDL 安排学习时段")
         st.caption(
-            "AI Scroll estimates the work, keeps a buffer before submission, checks existing calendar events "
-            "and schedules the latest available sessions backwards from the DDL."
+            "AI Scroll estimates the work, keeps a submission buffer and avoids calendar conflicts. "
+            "/ AI Scroll 会估算工作量、保留提交缓冲时间并避开已有日历冲突。"
         )
         effort_col, buffer_col = st.columns(2)
         estimated_hours = effort_col.number_input(
-            "Estimated work hours",
+            "Estimated work hours / 预计工作时数",
             min_value=1.0,
             max_value=40.0,
             value=float(suggested_effort_hours(safety_item)),
@@ -1190,7 +1258,7 @@ with safety_tab:
             help="You remain in control of the estimate. The default comes from the task type.",
         )
         buffer_hours = buffer_col.number_input(
-            "Finish before DDL by",
+            "Finish before DDL by / 提前完成时间",
             min_value=0.0,
             max_value=72.0,
             value=4.0,
@@ -1204,9 +1272,9 @@ with safety_tab:
             float(buffer_hours),
             "google" if using_google_calendar else "demo",
         )
-        regenerate_plan = st.button("Generate or refresh backward plan", use_container_width=True)
+        regenerate_plan = st.button("Generate or refresh backward plan / 生成或刷新倒推计划", use_container_width=True)
         cached_plan = st.session_state.get("backward_plan")
-        if regenerate_plan or not cached_plan or cached_plan.get("key") != plan_key:
+        if regenerate_plan:
             try:
                 planning_now = datetime.now().astimezone().replace(second=0, microsecond=0)
                 deadline_for_busy = datetime.fromisoformat(safety_item.deadline_iso)
@@ -1224,12 +1292,22 @@ with safety_tab:
                 st.session_state.pop("backward_plan", None)
                 cached_plan = None
                 st.warning(f"Backward plan needs adjustment: {exc}")
+        elif cached_plan and cached_plan.get("key") != plan_key:
+            cached_plan = None
+
+        if cached_plan is None:
+            st.info(
+                "Step 3: check the DDL evidence above, adjust the work estimate, then select "
+                "**Generate or refresh backward plan**. / 第 3 步：检查上方 DDL 证据，调整工作量，然后点击"
+                "**生成或刷新倒推计划**。"
+            )
 
         if cached_plan and cached_plan.get("key") == plan_key:
             plan = cached_plan["value"]
             st.success(
                 f"Prepared {len(plan.milestones)} work sessions before the "
-                f"{plan.buffer_hours:g}-hour submission buffer. Nothing has been written yet."
+                f"{plan.buffer_hours:g}-hour submission buffer. Nothing has been written yet. "
+                f"/ 已生成 {len(plan.milestones)} 个学习时段，并预留 {plan.buffer_hours:g} 小时提交缓冲；目前尚未写入日历。"
             )
             for index, milestone in enumerate(plan.milestones, start=1):
                 st.markdown(
@@ -1242,12 +1320,12 @@ with safety_tab:
                 )
             plan_proposals = [milestone_proposal(safety_item, value) for value in plan.milestones]
             st.info(
-                "The next button is one explicit approval for the displayed study sessions. "
-                "The DDL reminder above remains a separate approval."
+                "The next button approves the displayed sessions; the DDL reminder is separate. "
+                "/ 下一按钮用于确认这些学习时段；DDL 提醒需要单独确认。"
             )
             if st.button(
-                "Confirm and add study plan to Google Calendar"
-                if using_google_calendar else "Confirm study plan and add to simulated calendar",
+                "Confirm and add study plan to Google Calendar / 确认并写入 Google 日历"
+                if using_google_calendar else "Confirm study plan and add to simulated calendar / 确认并写入模拟日历",
                 type="primary",
                 use_container_width=True,
             ):
@@ -1261,7 +1339,8 @@ with safety_tab:
                 duplicate_count = sum(value["status"] == "deduplicated" for value in last_plan_results)
                 st.success(
                     f"Study plan saved: {committed_count} new session(s), "
-                    f"{duplicate_count} duplicate(s) prevented."
+                    f"{duplicate_count} duplicate(s) prevented. "
+                    f"/ 学习计划已保存：新增 {committed_count} 个时段，阻止 {duplicate_count} 个重复项目。"
                 )
                 st.caption(
                     "These sessions were written through the Google Calendar API."

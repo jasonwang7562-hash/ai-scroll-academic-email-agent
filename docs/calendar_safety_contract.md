@@ -29,5 +29,4 @@ A proposal is blocked when:
 
 ## Current adapter
 
-The current demo uses an in-memory calendar adapter and records no external event. The same gate will sit in front of the Google Calendar adapter in the later integration milestone.
-
+The default demo uses an in-memory calendar adapter and records no external event. An optional Google Calendar adapter is now available behind the same gate. It requests calendar-event OAuth access, searches by the proposal fingerprint before writing, and creates or updates an event only after explicit confirmation.

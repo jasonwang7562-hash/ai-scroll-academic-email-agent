@@ -66,7 +66,7 @@ The first assessed run should record the exact model ID and provider price date.
 
 ## Calendar safety
 
-The current calendar adapter is a local in-memory demonstration. It proves the approval gate and deduplication logic without modifying an external account. Ambiguous, cancelled, expired and unconfirmed actions are blocked before the adapter is called. A later Google Calendar adapter must use the same gate.
+The app includes both a local in-memory calendar demonstration and an optional Google Calendar adapter. Both sit behind the same approval gate: ambiguous, cancelled, expired and unconfirmed actions are blocked before the adapter is called. Google Calendar writes require separate OAuth authorization and an explicit confirmation for each reviewed event.
 
 ## Repository map
 

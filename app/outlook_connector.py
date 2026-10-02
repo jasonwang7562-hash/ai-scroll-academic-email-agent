@@ -15,6 +15,7 @@ from app.models import EmailInput
 
 GRAPH_BASE_URL = "https://graph.microsoft.com/v1.0"
 MICROSOFT_SCOPES = ["Mail.Read"]
+MICROSOFT_GRAPH_POWERSHELL_CLIENT_ID = "14d82eec-204b-4c2f-b7e8-296a70dab67e"
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -33,6 +34,12 @@ def microsoft_token_path() -> Path:
 def microsoft_config_path() -> Path:
     return _configured_path(
         "AI_SCROLL_MICROSOFT_CONFIG", "data/private/microsoft_oauth.json"
+    )
+
+
+def outlook_device_flow_path() -> Path:
+    return _configured_path(
+        "AI_SCROLL_OUTLOOK_DEVICE_FLOW", "data/private/outlook_device_flow.json"
     )
 
 
@@ -58,8 +65,8 @@ def _local_config() -> dict:
 
 def microsoft_client_id() -> str:
     return os.getenv("AI_SCROLL_MICROSOFT_CLIENT_ID", "").strip() or str(
-        _local_config().get("client_id", "")
-    ).strip()
+        _local_config().get("client_id", MICROSOFT_GRAPH_POWERSHELL_CLIENT_ID)
+    ).strip() or MICROSOFT_GRAPH_POWERSHELL_CLIENT_ID
 
 
 def microsoft_tenant_id() -> str:
@@ -167,7 +174,7 @@ class OutlookMailboxConnector:
         self.max_results = min(max_results, 100)
 
     def fetch_new(self) -> list[EmailInput]:
-        if powershell_outlook_is_authorized():
+        if powershell_outlook_is_authorized() and not microsoft_token_path().is_file():
             return self._fetch_via_powershell()
         response = requests.get(
             f"{GRAPH_BASE_URL}/me/mailFolders/inbox/messages",

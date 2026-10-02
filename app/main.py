@@ -20,6 +20,11 @@ from app.gmail_connector import (
     gmail_is_authorized,
     gmail_token_path,
 )
+from app.google_calendar import (
+    GoogleCalendarStore,
+    google_calendar_is_authorized,
+    google_calendar_token_path,
+)
 from app.inbox_agent import DemoMailboxConnector, InboxAgent
 from app.label_review import (
     CALENDAR_ACTIONS, RELATIONS, TASK_TYPES, URGENCIES, load_jsonl, load_review_rows,
@@ -32,6 +37,7 @@ from app.outlook_connector import (
     microsoft_client_id,
     microsoft_config_path,
     microsoft_tenant_id,
+    outlook_device_flow_path,
     outlook_graph_marker_path,
     outlook_is_authorized,
     save_microsoft_config,
@@ -468,9 +474,11 @@ st.session_state.setdefault("demo_mailbox_connected", False)
 st.session_state.setdefault("mailbox_provider", "demo")
 st.session_state.setdefault("agent_run", None)
 st.session_state.setdefault("course_scope", "PE6201, HR6102")
+st.session_state.setdefault("calendar_provider", "demo")
 agent_snapshot = st.session_state["agent_run"]
 gmail_authorized = gmail_is_authorized()
 outlook_authorized = outlook_is_authorized()
+calendar_authorized = google_calendar_is_authorized()
 active_provider = st.session_state["mailbox_provider"]
 connected = (
     gmail_authorized if active_provider == "gmail"
@@ -720,6 +728,12 @@ with agent_tab:
         st.caption("Choose your provider. Personal Outlook is the quickest option on this computer.")
         outlook_setup, gmail_setup = st.tabs(["Outlook · recommended", "Gmail"])
         with outlook_setup:
+            device_flow = {}
+            if outlook_device_flow_path().is_file():
+                try:
+                    device_flow = json.loads(outlook_device_flow_path().read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    device_flow = {}
             st.markdown(
                 '<div class="setup-status"><span>Connection status</span>'
                 f'<b>{"✓ Outlook is authorized" if outlook_authorized else "Outlook is not connected yet"}</b></div>',
@@ -739,15 +753,30 @@ with agent_tab:
                 use_container_width=True,
                 disabled=outlook_authorized,
             ):
+                outlook_device_flow_path().unlink(missing_ok=True)
                 creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
                 subprocess.Popen(
                     [sys.executable, str(ROOT / "scripts" / "authorize_outlook_powershell.py")],
                     cwd=str(ROOT),
                     creationflags=creation_flags,
                 )
-                st.info("Microsoft sign-in has opened. Finish the sign-in there, then return to this page.")
-            if outlook_refresh.button("I finished sign-in — check connection", use_container_width=True):
+                st.info("Authorization is starting. Select “Check / show login code” after a moment.")
+            if outlook_refresh.button("Check / show login code", use_container_width=True):
                 st.rerun()
+            if device_flow.get("status") == "waiting":
+                st.markdown("#### Microsoft device sign-in")
+                st.code(device_flow.get("user_code", ""), language=None)
+                st.link_button(
+                    "Open Microsoft device login",
+                    device_flow.get("verification_uri", "https://microsoft.com/devicelogin"),
+                    type="primary",
+                    use_container_width=True,
+                )
+                st.caption("Enter the code shown above on the Microsoft page, then return and check the connection again.")
+            elif device_flow.get("status") == "error":
+                st.error(device_flow.get("message", "Microsoft authorization failed."))
+            elif device_flow.get("status") == "authorized":
+                st.success("Microsoft authorization completed. Select Use Outlook above.")
             st.caption("Requested permission: Microsoft Graph Mail.Read (read only). Credentials stay in Microsoft's local sign-in cache.")
             with st.expander("Advanced: school or company Microsoft 365"):
                 st.markdown(
@@ -909,6 +938,63 @@ with safety_tab:
     st.markdown('<div class="section-label">Human approval gate</div>', unsafe_allow_html=True)
     st.subheader("Review before any calendar action")
     st.caption("Choose a case, inspect the proposed change and confirm only when its evidence is complete.")
+
+    st.markdown("#### Calendar connection")
+    calendar_source_left, calendar_source_right = st.columns(2)
+    if calendar_source_left.button(
+        "Using simulated calendar" if st.session_state["calendar_provider"] == "demo" else "Use simulated calendar",
+        use_container_width=True,
+        disabled=st.session_state["calendar_provider"] == "demo",
+    ):
+        st.session_state["calendar_provider"] = "demo"
+        st.rerun()
+    if calendar_source_right.button(
+        "Using Google Calendar" if st.session_state["calendar_provider"] == "google" else "Use Google Calendar" if calendar_authorized else "Google Calendar · connect below",
+        use_container_width=True,
+        disabled=not calendar_authorized or st.session_state["calendar_provider"] == "google",
+    ):
+        st.session_state["calendar_provider"] = "google"
+        st.rerun()
+    with st.expander("Connect Google Calendar", expanded=not calendar_authorized):
+        st.markdown(
+            "1. In Google Cloud, enable **Google Calendar API**.\n"
+            "2. Create an **OAuth client ID → Desktop app** and download the JSON.\n"
+            "3. Save it at the private path shown below.\n"
+            "4. Select **Authorize Google Calendar**, sign in, and allow calendar event access.\n"
+            "5. Return here and select **Refresh connection**."
+        )
+        st.code(str(client_secrets_path()), language=None)
+        calendar_setup_left, calendar_setup_right = st.columns(2)
+        with calendar_setup_left:
+            st.link_button(
+                "Open Google Cloud credentials",
+                "https://console.cloud.google.com/apis/credentials",
+                use_container_width=True,
+            )
+            if st.button(
+                "Authorize Google Calendar",
+                type="primary",
+                use_container_width=True,
+                disabled=not client_secrets_path().is_file() or calendar_authorized,
+            ):
+                creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+                subprocess.Popen(
+                    [sys.executable, str(ROOT / "scripts" / "authorize_google_calendar.py")],
+                    cwd=str(ROOT),
+                    creationflags=creation_flags,
+                )
+                st.info("Google authorization opened. Finish consent, then refresh the connection.")
+        with calendar_setup_right:
+            st.markdown(
+                '<div class="setup-status"><span>Connection status</span>'
+                f'<b>{"✓ Google Calendar is connected" if calendar_authorized else "Google Calendar is not connected"}</b></div>',
+                unsafe_allow_html=True,
+            )
+            if st.button("Refresh Google Calendar connection", use_container_width=True):
+                st.rerun()
+            st.caption(f"Private token: {google_calendar_token_path()}")
+        st.caption("AI Scroll requests calendar event access only. An event is written only after the approval button below is selected.")
+
     scenario = st.selectbox(
         "Safety scenario",
         ["Eligible deadline", "Ambiguous next Friday", "Cancelled workshop"],
@@ -960,7 +1046,8 @@ with safety_tab:
     st.markdown(f'<div class="policy-grid">{safety_cards}</div>', unsafe_allow_html=True)
     st.session_state.setdefault("calendar_events", {})
     st.session_state.setdefault("calendar_audit", [])
-    store = InMemoryCalendarStore(st.session_state["calendar_events"])
+    using_google_calendar = st.session_state["calendar_provider"] == "google" and calendar_authorized
+    store = GoogleCalendarStore() if using_google_calendar else InMemoryCalendarStore(st.session_state["calendar_events"])
     gate = CalendarApprovalGate(store=store, audit=st.session_state["calendar_audit"])
 
     try:
@@ -984,9 +1071,13 @@ with safety_tab:
             '</div>',
             unsafe_allow_html=True,
         )
-        st.info("The next button is the explicit approval step. No external calendar is connected in this demonstration.")
+        st.info(
+            "The next button is the explicit approval step. It will write this reviewed event to your Google Calendar."
+            if using_google_calendar
+            else "The next button is the explicit approval step. The current target is the simulated calendar."
+        )
         if st.button(
-            "Confirm reviewed event and add to simulated calendar",
+            "Confirm and add to Google Calendar" if using_google_calendar else "Confirm reviewed event and add to simulated calendar",
             type="primary",
             use_container_width=True,
         ):
@@ -998,7 +1089,11 @@ with safety_tab:
                 st.success(f"Approved event recorded as {last_result['event_id']}.")
             else:
                 st.info(f"Duplicate prevented. Existing event: {last_result['event_id']}.")
-            st.caption("This demonstration uses a local in-memory adapter. No external calendar was changed.")
+            st.caption(
+                "The approved event was written through the Google Calendar API."
+                if last_result.get("external_write")
+                else "This run used the local simulated calendar. No external calendar was changed."
+            )
     except CalendarPolicyError as exc:
         st.warning(f"Calendar action blocked: {exc}")
         if safety_item.evidence_history:

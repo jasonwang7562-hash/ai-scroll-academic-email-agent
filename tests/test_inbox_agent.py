@@ -17,6 +17,12 @@ def test_agent_scans_mailbox_filters_noise_and_merges_threads():
     assert len(result.decisions) == 5
     assert sum(item.decision == "process" for item in result.decisions) == 4
     assert result.duration_ms >= 0
+    assert [step.tool for step in result.trace] == [
+        "mailbox.fetch_new",
+        "scan_policy.classify",
+        "timeline.extract_and_merge",
+        "calendar.approval_gate",
+    ]
 
     project = next(item for item in result.timeline if item.course == "PE6201")
     assert project.deadline_iso == "2026-10-04T23:59:00+08:00"

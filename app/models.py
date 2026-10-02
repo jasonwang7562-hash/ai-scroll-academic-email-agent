@@ -60,6 +60,7 @@ class CalendarProposal(BaseModel):
     source_thread_id: str = ""
     title: str
     start: str
+    end: str | None = None
     timezone: str
     description: str
     action: Literal["create", "update"] = "create"

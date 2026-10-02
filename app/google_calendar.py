@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from pathlib import Path
 
 from app.gmail_connector import client_secrets_path
 from app.models import CalendarProposal, CalendarWriteResult
+from app.backward_planner import BusyWindow
 
 
 GOOGLE_CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events"
@@ -55,7 +56,7 @@ class GoogleCalendarStore:
     @staticmethod
     def _event_body(proposal: CalendarProposal) -> dict:
         start = datetime.fromisoformat(proposal.start)
-        end = start + timedelta(minutes=30)
+        end = datetime.fromisoformat(proposal.end) if proposal.end else start + timedelta(minutes=30)
         return {
             "summary": proposal.title,
             "description": proposal.description,
@@ -109,3 +110,34 @@ class GoogleCalendarStore:
             external_write=True,
         )
 
+    def list_busy(self, start: datetime, end: datetime) -> list[BusyWindow]:
+        """Return existing event windows used by the backward planner."""
+        items = (
+            self._service().events()
+            .list(
+                calendarId=self.calendar_id,
+                timeMin=start.isoformat(),
+                timeMax=end.isoformat(),
+                singleEvents=True,
+                orderBy="startTime",
+            )
+            .execute()
+            .get("items", [])
+        )
+        windows: list[BusyWindow] = []
+        for item in items:
+            start_value = item.get("start", {})
+            end_value = item.get("end", {})
+            if start_value.get("dateTime") and end_value.get("dateTime"):
+                windows.append(BusyWindow(
+                    start=datetime.fromisoformat(start_value["dateTime"].replace("Z", "+00:00")),
+                    end=datetime.fromisoformat(end_value["dateTime"].replace("Z", "+00:00")),
+                ))
+            elif start_value.get("date"):
+                event_day = datetime.fromisoformat(start_value["date"]).date()
+                tz = start.tzinfo
+                windows.append(BusyWindow(
+                    start=datetime.combine(event_day, time.min, tzinfo=tz),
+                    end=datetime.combine(event_day + timedelta(days=1), time.min, tzinfo=tz),
+                ))
+        return windows

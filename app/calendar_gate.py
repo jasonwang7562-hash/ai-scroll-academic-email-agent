@@ -37,6 +37,17 @@ class InMemoryCalendarStore:
             status="committed",
         )
 
+    def list_busy(self, start: datetime, end: datetime) -> list:
+        from app.backward_planner import BusyWindow
+
+        windows = []
+        for event in self.events.values():
+            event_start = datetime.fromisoformat(event["start"])
+            event_end = datetime.fromisoformat(event["end"]) if event.get("end") else event_start
+            if event_start < end and event_end > start:
+                windows.append(BusyWindow(start=event_start, end=event_end))
+        return windows
+
 
 class CalendarApprovalGate:
     def __init__(self, store: InMemoryCalendarStore | None = None, audit: list[dict] | None = None):

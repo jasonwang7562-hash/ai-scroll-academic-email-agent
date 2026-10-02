@@ -20,6 +20,8 @@ The second working slice accepts a related email chain and returns one timeline 
 - cancellations blocking calendar action;
 - complete evidence and field-level change history.
 
+The planning slice turns a verified DDL into reviewable study sessions. It estimates effort by task type, keeps a configurable submission buffer, schedules milestones backwards, avoids existing calendar events and requires a second explicit approval before writing the sessions. The Agent workspace also exposes a concise ReAct-style tool trace for mailbox read, scope filtering, extraction/merge and the approval stop.
+
 The default Demo mode is deterministic and requires no API key. Live model mode supports an OpenAI-compatible chat-completions endpoint through environment variables.
 
 The fourth app tab shows the latest provisional offline comparison against a simple keyword/date baseline. It is visibly marked as non-final while labels await human review.
@@ -66,7 +68,7 @@ The first assessed run should record the exact model ID and provider price date.
 
 ## Calendar safety
 
-The app includes both a local in-memory calendar demonstration and an optional Google Calendar adapter. Both sit behind the same approval gate: ambiguous, cancelled, expired and unconfirmed actions are blocked before the adapter is called. Google Calendar writes require separate OAuth authorization and an explicit confirmation for each reviewed event.
+The app includes both a local in-memory calendar demonstration and an optional Google Calendar adapter. Both sit behind the same approval gate: ambiguous, cancelled, expired and unconfirmed actions are blocked before the adapter is called. The Google adapter can read existing event windows for conflict avoidance and create or update approved DDL reminders and study sessions. Google Calendar access requires separate OAuth authorization and an explicit confirmation for each reviewed plan.
 
 ## Repository map
 

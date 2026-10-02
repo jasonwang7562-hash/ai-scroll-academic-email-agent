@@ -69,6 +69,13 @@ class ScanDecision:
 
 
 @dataclass(frozen=True)
+class AgentTraceStep:
+    phase: str
+    tool: str
+    result: str
+
+
+@dataclass(frozen=True)
 class AgentRunResult:
     connector: str
     scanned: int
@@ -77,6 +84,7 @@ class AgentRunResult:
     review_required: int
     timeline: list[TimelineItem]
     decisions: list[ScanDecision]
+    trace: list[AgentTraceStep]
     duration_ms: int
 
 
@@ -106,6 +114,28 @@ class InboxAgent:
             review_required=review_required,
             timeline=timeline,
             decisions=decisions,
+            trace=[
+                AgentTraceStep(
+                    phase="Observe",
+                    tool="mailbox.fetch_new",
+                    result=f"Read {len(messages)} new messages from {self.connector.name}.",
+                ),
+                AgentTraceStep(
+                    phase="Act",
+                    tool="scan_policy.classify",
+                    result=f"Kept {len(academic)} course messages and excluded {len(messages) - len(academic)} unrelated messages.",
+                ),
+                AgentTraceStep(
+                    phase="Act",
+                    tool="timeline.extract_and_merge",
+                    result=f"Consolidated the retained mail into {len(timeline)} timeline items.",
+                ),
+                AgentTraceStep(
+                    phase="Observe",
+                    tool="calendar.approval_gate",
+                    result=f"Stopped with {review_required} item(s) requiring human review before any write.",
+                ),
+            ],
             duration_ms=round((perf_counter() - started) * 1000),
         )
 

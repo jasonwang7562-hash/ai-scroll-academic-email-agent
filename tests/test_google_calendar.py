@@ -1,3 +1,6 @@
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from app.google_calendar import GoogleCalendarStore
 from app.models import CalendarProposal
 
@@ -70,3 +73,18 @@ def test_google_calendar_store_updates_existing_event():
     result = GoogleCalendarStore(service=_Service(events)).create_or_update(proposal("update"))
     assert result.status == "committed"
     assert events.updated["eventId"] == "existing-event"
+
+
+def test_google_calendar_store_reads_busy_windows_for_planning():
+    events = _Events(existing=[{
+        "start": {"dateTime": "2026-10-03T18:00:00+08:00"},
+        "end": {"dateTime": "2026-10-03T19:00:00+08:00"},
+    }])
+    store = GoogleCalendarStore(service=_Service(events))
+    tz = ZoneInfo("Asia/Singapore")
+    windows = store.list_busy(
+        datetime(2026, 10, 3, 8, 0, tzinfo=tz),
+        datetime(2026, 10, 4, 23, 0, tzinfo=tz),
+    )
+    assert len(windows) == 1
+    assert windows[0].start.hour == 18

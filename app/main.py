@@ -10,6 +10,9 @@ from pathlib import Path
 import streamlit as st
 
 from app.calendar_gate import CalendarApprovalGate, CalendarPolicyError, InMemoryCalendarStore
+from app.backward_planner import (
+    PlanningError, build_backward_plan, milestone_proposal, suggested_effort_hours,
+)
 from app.evaluation_reporting import (
     comparison_rows, error_counts, filter_errors, load_errors, load_evaluation, primary_metrics,
 )
@@ -922,6 +925,12 @@ with agent_tab:
         metric_cols[2].metric("Noise ignored", agent_run.ignored)
         metric_cols[3].metric("Needs review", agent_run.review_required)
         st.caption(f"Completed in {agent_run.duration_ms} ms · No ignored message body was sent to extraction.")
+        with st.expander("View Agent tool trace", expanded=True):
+            st.caption("A reviewable ReAct-style trace. It shows tool decisions and results without exposing private model reasoning.")
+            for step in agent_run.trace:
+                st.markdown(
+                    f"**{step.phase} · `{step.tool}`**  \n{step.result}"
+                )
         st.markdown("#### Agent-created course timeline")
         for item in agent_run.timeline:
             deadline = datetime.fromisoformat(item.deadline_iso).strftime("%d %b %Y, %I:%M %p") if item.deadline_iso else "No active deadline"
@@ -1163,6 +1172,102 @@ with safety_tab:
                 if last_result.get("external_write")
                 else "This run used the local simulated calendar. No external calendar was changed."
             )
+
+        st.markdown("---")
+        st.markdown('<div class="section-label">Smart backward plan</div>', unsafe_allow_html=True)
+        st.subheader("Turn the DDL into workable study sessions")
+        st.caption(
+            "AI Scroll estimates the work, keeps a buffer before submission, checks existing calendar events "
+            "and schedules the latest available sessions backwards from the DDL."
+        )
+        effort_col, buffer_col = st.columns(2)
+        estimated_hours = effort_col.number_input(
+            "Estimated work hours",
+            min_value=1.0,
+            max_value=40.0,
+            value=float(suggested_effort_hours(safety_item)),
+            step=0.5,
+            help="You remain in control of the estimate. The default comes from the task type.",
+        )
+        buffer_hours = buffer_col.number_input(
+            "Finish before DDL by",
+            min_value=0.0,
+            max_value=72.0,
+            value=4.0,
+            step=1.0,
+            help="Reserved time for upload problems and final checks.",
+        )
+        plan_key = (
+            safety_item.thread_id,
+            safety_item.deadline_iso,
+            float(estimated_hours),
+            float(buffer_hours),
+            "google" if using_google_calendar else "demo",
+        )
+        regenerate_plan = st.button("Generate or refresh backward plan", use_container_width=True)
+        cached_plan = st.session_state.get("backward_plan")
+        if regenerate_plan or not cached_plan or cached_plan.get("key") != plan_key:
+            try:
+                planning_now = datetime.now().astimezone().replace(second=0, microsecond=0)
+                deadline_for_busy = datetime.fromisoformat(safety_item.deadline_iso)
+                busy_windows = store.list_busy(planning_now, deadline_for_busy)
+                planned = build_backward_plan(
+                    safety_item,
+                    now=planning_now,
+                    estimated_hours=float(estimated_hours),
+                    buffer_hours=float(buffer_hours),
+                    busy=busy_windows,
+                )
+                st.session_state["backward_plan"] = {"key": plan_key, "value": planned}
+                cached_plan = st.session_state["backward_plan"]
+            except (PlanningError, RuntimeError) as exc:
+                st.session_state.pop("backward_plan", None)
+                cached_plan = None
+                st.warning(f"Backward plan needs adjustment: {exc}")
+
+        if cached_plan and cached_plan.get("key") == plan_key:
+            plan = cached_plan["value"]
+            st.success(
+                f"Prepared {len(plan.milestones)} work sessions before the "
+                f"{plan.buffer_hours:g}-hour submission buffer. Nothing has been written yet."
+            )
+            for index, milestone in enumerate(plan.milestones, start=1):
+                st.markdown(
+                    '<div class="result-card">'
+                    f'<span class="badge badge-blue">Step {index}</span>'
+                    f'<div class="result-title">{html.escape(milestone.title)}</div>'
+                    f'<div class="result-meta">{milestone.start.strftime("%d %b, %H:%M")}–{milestone.end.strftime("%H:%M")} · '
+                    f'{html.escape(milestone.purpose)}</div></div>',
+                    unsafe_allow_html=True,
+                )
+            plan_proposals = [milestone_proposal(safety_item, value) for value in plan.milestones]
+            st.info(
+                "The next button is one explicit approval for the displayed study sessions. "
+                "The DDL reminder above remains a separate approval."
+            )
+            if st.button(
+                "Confirm and add study plan to Google Calendar"
+                if using_google_calendar else "Confirm study plan and add to simulated calendar",
+                type="primary",
+                use_container_width=True,
+            ):
+                plan_results = [gate.commit(value, user_confirmed=True) for value in plan_proposals]
+                st.session_state["last_plan_results"] = [value.model_dump() for value in plan_results]
+            last_plan_results = st.session_state.get("last_plan_results", [])
+            if last_plan_results and {
+                value["proposal_id"] for value in last_plan_results
+            } == {value.proposal_id for value in plan_proposals}:
+                committed_count = sum(value["status"] == "committed" for value in last_plan_results)
+                duplicate_count = sum(value["status"] == "deduplicated" for value in last_plan_results)
+                st.success(
+                    f"Study plan saved: {committed_count} new session(s), "
+                    f"{duplicate_count} duplicate(s) prevented."
+                )
+                st.caption(
+                    "These sessions were written through the Google Calendar API."
+                    if any(value.get("external_write") for value in last_plan_results)
+                    else "These sessions are in the simulated calendar; no external calendar was changed."
+                )
     except CalendarPolicyError as exc:
         st.warning(f"Calendar action blocked: {exc}")
         if safety_item.evidence_history:

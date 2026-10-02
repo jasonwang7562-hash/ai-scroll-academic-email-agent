@@ -338,14 +338,74 @@ st.markdown(
     .setup-status {border:1px solid var(--line); border-radius:9px; background:#fff; padding:13px 14px; margin:.4rem 0 .8rem;}
     .setup-status span {display:block; color:#888f89; font-size:.61rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase;}
     .setup-status b {display:block; color:var(--ink); font-size:.9rem; margin-top:4px;}
+
+    /* Submission polish: restore one memorable focus card without the old heavy dashboard. */
+    :root {
+      --canvas:#eef3f7;
+      --ink:#17243b;
+      --muted:#66758a;
+      --line:#dce4ec;
+      --brand:#236b67;
+      --brand-soft:#e7f3f1;
+    }
+    .stApp {
+      background:
+        radial-gradient(circle at 80% 0%, rgba(113,190,177,.12), transparent 28rem),
+        linear-gradient(180deg,#f7fafc 0,#edf2f6 100%);
+    }
+    [data-testid="stHeader"] {background:rgba(247,250,252,.78); backdrop-filter:blur(12px);}
+    [data-testid="stSidebar"] {background:#f8fafb; border-right:1px solid #dce4ea;}
+    .block-container {max-width:1320px; padding-top:2.25rem;}
+    .workspace-head {border-bottom:0; padding:0 2px; margin-bottom:1.1rem;}
+    .workspace-brand {font-size:1.38rem;}
+    .workspace-sub {color:#778599;}
+    .sync-pill {background:#fff; border:1px solid #dce4ea; border-radius:999px; padding:7px 11px; box-shadow:0 4px 16px rgba(34,58,80,.05);}
+    .today-grid {grid-template-columns:minmax(0,1.65fr) minmax(285px,.75fr); gap:14px; border:0; border-radius:0; overflow:visible; background:transparent; margin-bottom:14px;}
+    .today-focus {
+      position:relative; overflow:hidden; min-height:210px; border:0; border-radius:24px;
+      padding:27px 29px; color:white;
+      background:linear-gradient(130deg,#102b4a 0%,#174768 52%,#197a71 100%);
+      box-shadow:0 18px 42px rgba(22,55,78,.18);
+    }
+    .today-focus:before {content:""; position:absolute; width:260px; height:260px; border-radius:50%; right:-90px; top:-130px; background:rgba(255,255,255,.08);}
+    .today-focus:after {display:block; content:""; position:absolute; width:170px; height:170px; border-radius:50%; right:70px; bottom:-125px; border:1px solid rgba(255,255,255,.12);}
+    .today-kicker {position:relative; z-index:1; color:#aee6d9; font-size:.67rem;}
+    .today-focus h1 {position:relative; z-index:1; color:#fff; font-size:2rem; max-width:720px; margin:.65rem 0 .55rem;}
+    .today-focus p {position:relative; z-index:1; color:#dcebf2; font-size:.88rem; max-width:720px;}
+    .focus-tags {position:relative; z-index:1; gap:7px; margin-top:20px;}
+    .focus-tag {border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.09); color:#f5fbff; border-radius:999px; padding:6px 10px; font-size:.67rem;}
+    .focus-tag:before {display:none;}
+    .activity-card {border:1px solid rgba(218,228,236,.95); border-radius:24px; background:rgba(255,255,255,.92); padding:20px 21px; box-shadow:0 14px 34px rgba(34,58,80,.09);}
+    .activity-head {font-size:.82rem; margin-bottom:11px;}
+    .activity-stat {grid-template-columns:40px 1fr; padding:8px 0; border-bottom:1px solid #edf1f4;}
+    .activity-stat:last-of-type {border-bottom:0;}
+    .activity-stat b {font-size:1.15rem; color:#17344e;}
+    .activity-stat span {font-size:.7rem;}
+    .safety-lock {border:0; background:#edf7f4; color:#27655d; border-radius:10px; padding:9px 10px;}
+    .quick-strip {gap:10px; border:0; border-radius:0; overflow:visible; background:transparent; margin-bottom:1.2rem;}
+    .quick-card {min-height:72px; border:1px solid #dce4eb; border-radius:16px; padding:12px 15px; background:rgba(255,255,255,.94); box-shadow:0 8px 22px rgba(34,58,80,.055);}
+    .quick-card:last-child {border-right:1px solid #dce4eb;}
+    .quick-card span {color:#8290a2;}
+    .quick-card b {font-size:.8rem;}
+    .quick-value {color:#19756b; font-size:1rem;}
+    [data-testid="stTabs"] > div > [data-baseweb="tab-list"] {gap:5px; border:1px solid #dce4eb; border-radius:14px; background:rgba(255,255,255,.9); padding:5px; box-shadow:0 8px 22px rgba(34,58,80,.045);}
+    [data-testid="stTabs"] button {padding:.58rem .85rem; border-radius:9px; color:#657487 !important;}
+    [data-testid="stTabs"] button:hover {background:#edf3f6; color:#17344e !important;}
+    [data-testid="stTabs"] button[aria-selected="true"] {background:#17344e; color:#fff !important;}
+    [data-testid="stTabs"] [data-baseweb="tab-highlight"] {display:none;}
+    .agent-grid {gap:10px; border:0; border-radius:0; overflow:visible; background:transparent;}
+    .agent-card {border:1px solid #dce4eb; border-radius:14px; padding:14px 15px; box-shadow:0 7px 20px rgba(34,58,80,.04);}
+    .agent-card:last-child {border-right:1px solid #dce4eb;}
+    .result-card,.rail-card,.source-context,.flow-card,.policy-card {border-radius:13px; box-shadow:0 6px 18px rgba(34,58,80,.04);}
+    .connect-guide {background:linear-gradient(135deg,#f2f8f7,#f7fafc); border-color:#cfe1df; border-radius:16px;}
     @media (max-width:900px) {
       .workspace-head{align-items:flex-start}
       .today-grid{grid-template-columns:1fr}
       .quick-strip{grid-template-columns:1fr}
       .today-focus h1{font-size:1.45rem}
-      .activity-card{border-left:0;border-top:1px solid var(--line)}
-      .quick-card{border-right:0;border-bottom:1px solid var(--line)}
-      .quick-card:last-child{border-bottom:0}
+      .activity-card{border:1px solid var(--line)}
+      .quick-card{border:1px solid var(--line)}
+      .quick-card:last-child{border:1px solid var(--line)}
       .route{grid-template-columns:repeat(2,1fr)}
       .policy-grid{grid-template-columns:1fr}
       .approval-summary{grid-template-columns:1fr}
@@ -470,7 +530,7 @@ def show_timeline_item(item: TimelineItem):
         st.json(item.model_dump())
 
 
-st.session_state.setdefault("demo_mailbox_connected", False)
+st.session_state.setdefault("demo_mailbox_connected", True)
 st.session_state.setdefault("mailbox_provider", "demo")
 st.session_state.setdefault("agent_run", None)
 st.session_state.setdefault("course_scope", "PE6201, HR6102")
@@ -480,6 +540,15 @@ gmail_authorized = gmail_is_authorized()
 outlook_authorized = outlook_is_authorized()
 calendar_authorized = google_calendar_is_authorized()
 active_provider = st.session_state["mailbox_provider"]
+if (active_provider == "outlook" and not outlook_authorized) or (
+    active_provider == "gmail" and not gmail_authorized
+):
+    st.session_state["mailbox_provider"] = "demo"
+    st.session_state["demo_mailbox_connected"] = True
+    st.session_state["agent_run"] = None
+    active_provider = "demo"
+if active_provider == "demo":
+    st.session_state["demo_mailbox_connected"] = True
 connected = (
     gmail_authorized if active_provider == "gmail"
     else outlook_authorized if active_provider == "outlook"
@@ -617,7 +686,7 @@ with agent_tab:
     st.caption("Connect once, then AI Scroll can read new course mail without asking you to paste each message.")
 
     real_mailbox_connected = gmail_authorized or outlook_authorized
-    if not real_mailbox_connected:
+    if not connected:
         st.markdown(
             '<div class="connect-guide">'
             '<div class="connect-guide-head"><div><b>Connect your first real mailbox</b>'

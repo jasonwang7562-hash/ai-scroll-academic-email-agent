@@ -60,29 +60,45 @@ st.markdown(
         --danger-soft:#fff0f0;
     }
     .stApp {background:var(--canvas); color:var(--ink);}
-    .block-container {max-width:1440px; padding-top:1.25rem; padding-bottom:4rem;}
+    .block-container {max-width:1440px; padding-top:3.6rem; padding-bottom:4rem;}
     [data-testid="stSidebar"] {background:#111936; border-right:1px solid #263052;}
     [data-testid="stSidebar"] * {color:#f5f7ff;}
     [data-testid="stSidebar"] .stAlert {background:#1d284d; border:1px solid #34416c;}
+    [data-testid="stSidebar"] [data-testid="stAlert"] p {color:#f5f7ff !important;}
     [data-testid="stTabs"] button {font-size:.95rem; font-weight:650; padding:.85rem 1rem;}
     [data-testid="stMetric"] {background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px 16px; box-shadow:0 8px 24px rgba(20,33,61,.04);}
     [data-testid="stMetricValue"] {font-size:1.5rem; color:var(--ink);}
     [data-testid="stMetricLabel"] {color:#526078 !important; font-weight:700;}
     [data-testid="stAlert"] p {color:var(--ink); font-weight:600;}
     .eyebrow {color:var(--brand); font-weight:800; letter-spacing:.1em; font-size:.72rem; text-transform:uppercase;}
-    .hero {background:linear-gradient(120deg,#101936 0%,#182451 58%,#26346f 100%); color:white; border-radius:24px; padding:28px 32px; margin:.4rem 0 1.25rem; box-shadow:0 18px 45px rgba(24,36,81,.18); overflow:hidden; position:relative;}
-    .hero:after {content:""; position:absolute; width:260px; height:260px; border-radius:50%; right:-90px; top:-130px; background:radial-gradient(circle,rgba(96,193,255,.35),rgba(82,103,232,0));}
-    .hero h1 {font-size:2.35rem; line-height:1.08; margin:.35rem 0 .55rem; color:white; letter-spacing:-.035em;}
-    .hero p {font-size:1rem; color:#d6ddff; margin:0; max-width:760px;}
-    .hero-kicker {display:inline-flex; gap:8px; align-items:center; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.1); color:#dfe5ff; font-size:.78rem; font-weight:700;}
-    .status-strip {display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:1.35rem;}
-    .status-card {background:white; border:1px solid var(--line); border-radius:16px; padding:15px 17px; box-shadow:0 8px 22px rgba(20,33,61,.035);}
-    .status-card .number {font-size:1.45rem; font-weight:780; color:var(--ink); line-height:1.1;}
-    .status-card .label {font-size:.78rem; color:var(--muted); margin-top:5px;}
-    .brief-banner {display:flex; align-items:center; justify-content:space-between; gap:22px; background:linear-gradient(100deg,#eef1ff,#f7f9ff 55%,#eaf8f4); border:1px solid #dce2fb; border-radius:18px; padding:16px 19px; margin:-.35rem 0 1.25rem;}
-    .brief-banner .brief-copy {font-size:.9rem; color:#40506c; line-height:1.45;}
-    .brief-banner .brief-copy b {display:block; color:var(--ink); font-size:1rem; margin-bottom:2px;}
-    .brief-action {white-space:nowrap; border-radius:999px; padding:7px 12px; background:white; border:1px solid #ccd5f4; color:#4256c9; font-size:.76rem; font-weight:800;}
+    .workspace-head {display:flex; align-items:center; justify-content:space-between; gap:18px; margin:.1rem 0 .9rem;}
+    .workspace-brand {font-size:1.35rem; font-weight:850; color:var(--ink); letter-spacing:-.025em;}
+    .workspace-brand span {color:var(--brand);}
+    .workspace-sub {font-size:.76rem; color:var(--muted); margin-top:1px;}
+    .sync-pill {display:inline-flex; align-items:center; gap:7px; background:white; border:1px solid var(--line); border-radius:999px; padding:7px 11px; color:#46536a; font-size:.74rem; font-weight:750;}
+    .sync-dot {width:8px; height:8px; border-radius:50%; background:var(--teal); box-shadow:0 0 0 4px rgba(22,138,120,.1);}
+    .sync-dot.off {background:#98a2b3; box-shadow:0 0 0 4px rgba(152,162,179,.12);}
+    .today-grid {display:grid; grid-template-columns:minmax(0,1.65fr) minmax(280px,.85fr); gap:14px; margin-bottom:14px;}
+    .today-focus {position:relative; overflow:hidden; min-height:188px; border-radius:22px; padding:24px 26px; background:linear-gradient(125deg,#111a38 0%,#1d2c62 70%,#304691 100%); color:white; box-shadow:0 16px 38px rgba(24,36,81,.16);}
+    .today-focus:after {content:""; position:absolute; width:220px; height:220px; border-radius:50%; right:-75px; top:-110px; background:radial-gradient(circle,rgba(83,210,185,.32),rgba(82,103,232,0));}
+    .today-kicker {font-size:.68rem; color:#b8c5f3; font-weight:850; letter-spacing:.11em; text-transform:uppercase;}
+    .today-focus h1 {max-width:720px; color:white; font-size:1.85rem; line-height:1.12; letter-spacing:-.035em; margin:.55rem 0 .55rem;}
+    .today-focus p {max-width:760px; color:#d7def8; font-size:.88rem; line-height:1.5; margin:0;}
+    .focus-tags {display:flex; flex-wrap:wrap; gap:7px; margin-top:16px;}
+    .focus-tag {background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.13); border-radius:999px; padding:5px 9px; color:#edf1ff; font-size:.68rem; font-weight:700;}
+    .activity-card {border:1px solid var(--line); border-radius:22px; background:white; padding:18px 19px; box-shadow:0 10px 28px rgba(20,33,61,.05);}
+    .activity-head {display:flex; justify-content:space-between; align-items:center; gap:10px; color:var(--ink); font-size:.86rem; font-weight:800; margin-bottom:14px;}
+    .activity-head span {font-size:.63rem; color:var(--teal); background:var(--teal-soft); border-radius:999px; padding:4px 8px; text-transform:uppercase; letter-spacing:.06em;}
+    .activity-stat {display:grid; grid-template-columns:40px 1fr; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid #eef1f6;}
+    .activity-stat:last-of-type {border-bottom:0;}
+    .activity-stat b {font-size:1.18rem; color:var(--ink);}
+    .activity-stat span {font-size:.73rem; color:var(--muted); line-height:1.3;}
+    .safety-lock {margin-top:10px; border-radius:10px; padding:8px 10px; background:#f7f9fc; color:#43506a; font-size:.7rem; font-weight:750;}
+    .quick-strip {display:grid; grid-template-columns:1.35fr 1fr 1fr; gap:10px; margin-bottom:1.2rem;}
+    .quick-card {display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:68px; background:white; border:1px solid var(--line); border-radius:14px; padding:11px 14px;}
+    .quick-card span {display:block; color:#8a94a6; font-size:.63rem; font-weight:850; letter-spacing:.08em; text-transform:uppercase; margin-bottom:4px;}
+    .quick-card b {display:block; color:var(--ink); font-size:.82rem; line-height:1.25;}
+    .quick-value {flex:0 0 auto; color:var(--brand); font-weight:850; font-size:1.08rem;}
     .section-label {font-size:.7rem; color:#8790a5; font-weight:800; letter-spacing:.1em; text-transform:uppercase; margin:0 0 .6rem;}
     .view-pills {display:flex; flex-wrap:wrap; gap:6px; margin:0 0 13px;}
     .view-pill {border:1px solid var(--line); border-radius:999px; background:white; color:#58647a; padding:5px 9px; font-size:.7rem; font-weight:750;}
@@ -207,9 +223,10 @@ st.markdown(
     .before {color:#8b3a3a; text-decoration:line-through;}
     .after {color:#176b52; font-weight:700;}
     @media (max-width:900px) {
-      .status-strip{grid-template-columns:repeat(2,1fr)}
-      .hero h1{font-size:1.85rem}
-      .brief-banner{align-items:flex-start;flex-direction:column}
+      .workspace-head{align-items:flex-start}
+      .today-grid{grid-template-columns:1fr}
+      .quick-strip{grid-template-columns:1fr}
+      .today-focus h1{font-size:1.55rem}
       .route{grid-template-columns:repeat(2,1fr)}
       .policy-grid{grid-template-columns:1fr}
       .approval-summary{grid-template-columns:1fr}
@@ -351,28 +368,69 @@ mailbox_status = (
 scanned_count = agent_snapshot.scanned if agent_snapshot else 0
 prepared_count = len(agent_snapshot.timeline) if agent_snapshot else 0
 attention_count = agent_snapshot.review_required if agent_snapshot else 0
-agent_focus = (
-    "The latest mailbox run is complete. Review the prepared course timeline and approve only verified calendar proposals."
-    if agent_snapshot else
-    "Connect a mailbox once, then let AI Scroll fetch, filter and consolidate new academic mail for you."
-)
+active_deadlines: list[tuple[datetime, TimelineItem]] = []
+if agent_snapshot:
+    for timeline_item in agent_snapshot.timeline:
+        if timeline_item.status != "active" or not timeline_item.deadline_iso:
+            continue
+        try:
+            active_deadlines.append((datetime.fromisoformat(timeline_item.deadline_iso), timeline_item))
+        except ValueError:
+            continue
+next_deadline = min(active_deadlines, key=lambda pair: pair[0]) if active_deadlines else None
+today_label = datetime.now().astimezone().strftime("%A · %d %B")
+if agent_snapshot and attention_count:
+    focus_title = f"Review {attention_count} calendar proposal{'s' if attention_count != 1 else ''}"
+    focus_copy = "The agent has finished triage. Check the source evidence before approving any calendar change."
+elif agent_snapshot:
+    focus_title = "Your academic inbox is up to date"
+    focus_copy = "The latest scan is complete and no calendar proposal currently needs your attention."
+else:
+    focus_title = "Turn course emails into one reliable timeline"
+    focus_copy = "Connect a mailbox once. AI Scroll filters course mail, merges updates and stops before every external action."
+if next_deadline:
+    next_dt, next_item = next_deadline
+    next_deadline_title = html.escape(f"{next_item.course} · {next_item.task_title}")
+    next_deadline_value = html.escape(next_dt.strftime("%d %b · %H:%M"))
+else:
+    next_deadline_title = "No active deadline yet"
+    next_deadline_value = "—"
+scope_display = html.escape(st.session_state["course_scope"] or "All courses")
+connection_class = "" if connected else " off"
+agent_state_label = "Ready" if connected else "Setup"
 
 st.markdown(
     f"""
-    <div class="hero">
-      <div class="hero-kicker">✦ AI SCROLL · AUTONOMOUS INBOX AGENT</div>
-      <h1>Connect once. Let the agent follow every deadline.</h1>
-      <p>AI Scroll watches new academic mail, merges changing instructions and prepares evidence-backed actions for your approval.</p>
+    <div class="workspace-head">
+      <div>
+        <div class="workspace-brand">AI <span>Scroll</span></div>
+        <div class="workspace-sub">Academic command center · evidence before action</div>
+      </div>
+      <div class="sync-pill"><span class="sync-dot{connection_class}"></span>{html.escape(mailbox_status)}</div>
     </div>
-    <div class="status-strip">
-      <div class="status-card"><div class="number">{mailbox_status}</div><div class="label">Mailbox agent</div></div>
-      <div class="status-card"><div class="number">{scanned_count}</div><div class="label">Messages scanned</div></div>
-      <div class="status-card"><div class="number">{prepared_count}</div><div class="label">Course tasks prepared</div></div>
-      <div class="status-card"><div class="number">0</div><div class="label">Unauthorized writes</div></div>
+    <div class="today-grid">
+      <section class="today-focus">
+        <div class="today-kicker">Today · {html.escape(today_label)}</div>
+        <h1>{html.escape(focus_title)}</h1>
+        <p>{html.escape(focus_copy)}</p>
+        <div class="focus-tags">
+          <span class="focus-tag">{prepared_count} timeline items</span>
+          <span class="focus-tag">{attention_count} awaiting review</span>
+          <span class="focus-tag">Human approval required</span>
+        </div>
+      </section>
+      <aside class="activity-card">
+        <div class="activity-head">Agent activity <span>{agent_state_label}</span></div>
+        <div class="activity-stat"><b>{scanned_count}</b><span>messages inspected in the latest run</span></div>
+        <div class="activity-stat"><b>{prepared_count}</b><span>course items consolidated for review</span></div>
+        <div class="activity-stat"><b>{attention_count}</b><span>items waiting for your decision</span></div>
+        <div class="safety-lock">🔒 0 unauthorized calendar writes</div>
+      </aside>
     </div>
-    <div class="brief-banner">
-      <div class="brief-copy"><b>Agent status</b>{agent_focus}</div>
-      <div class="brief-action">{attention_count} item(s) need review</div>
+    <div class="quick-strip">
+      <div class="quick-card"><div><span>Next deadline</span><b>{next_deadline_title}</b></div><div class="quick-value">{next_deadline_value}</div></div>
+      <div class="quick-card"><div><span>Course scope</span><b>{scope_display}</b></div><div class="quick-value">{len([c for c in st.session_state['course_scope'].split(',') if c.strip()])}</div></div>
+      <div class="quick-card"><div><span>Review queue</span><b>Evidence required before action</b></div><div class="quick-value">{attention_count}</div></div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -389,13 +447,13 @@ with st.sidebar:
         st.markdown("- **High:** within 72 hours\n- **Medium:** 4–7 days\n- **Low:** more than 7 days\n- **Clarification:** unsafe to infer")
 
 agent_tab, single_tab, chain_tab, safety_tab, evaluation_tab, review_tab = st.tabs(
-    ["Agent workspace", "Academic inbox", "Course timeline", "Calendar review", "Evaluation", "Label review"]
+    ["Today", "Inbox", "Timeline", "Calendar review", "Evaluation", "Label review"]
 )
 
 with agent_tab:
-    st.markdown('<div class="eyebrow">Autonomous inbox agent</div>', unsafe_allow_html=True)
-    st.subheader("Connect once. Let the agent watch the inbox.")
-    st.caption("The agent fetches new messages, ignores unrelated mail, merges course updates and asks for approval before any calendar write.")
+    st.markdown('<div class="eyebrow">Inbox automation</div>', unsafe_allow_html=True)
+    st.subheader("Mailbox control center")
+    st.caption("Choose a read-only source, set the course scope and run a traceable inbox scan.")
 
     connector_name = (
         "Gmail · read only" if active_provider == "gmail" and gmail_authorized

@@ -307,7 +307,8 @@ st.markdown(
     .result-card,.rail-card,.source-context,.flow-card,.policy-card {border-radius:9px; box-shadow:none;}
     .agent-run {border:1px solid #dbe5de; background:#f3f7f4; border-radius:10px;}
     .empty-state {border-radius:10px; background:#fbfcfa;}
-    .stButton > button[kind="primary"] {background:var(--brand); border-color:var(--brand); border-radius:8px;}
+    .stButton > button[kind="primary"] {background:var(--brand); border-color:var(--brand); border-radius:8px; color:#fff !important;}
+    .stButton > button[kind="primary"] * {color:#fff !important;}
     .stButton > button[kind="primary"]:hover {background:#196746; border-color:#196746;}
     .stButton > button[kind="secondary"] {border-radius:8px;}
     .stTextInput input,.stTextArea textarea,.stSelectbox > div > div {border-radius:8px !important; color:#202522 !important; -webkit-text-fill-color:#202522 !important;}
@@ -317,6 +318,20 @@ st.markdown(
     .help-fab-panel {border-radius:10px; box-shadow:0 15px 38px rgba(34,43,37,.15);}
     .help-fab-step span {background:var(--brand-soft); color:var(--brand);}
     .info-dot {border-color:#cbd2cc; background:#fff; color:#69716b !important;}
+    .connect-guide {border:1px solid #d9e5dc; border-radius:11px; background:#f3f8f4; padding:18px 19px; margin:.8rem 0 1rem;}
+    .connect-guide-head {display:flex; justify-content:space-between; gap:14px; align-items:flex-start; margin-bottom:14px;}
+    .connect-guide-head b {display:block; color:var(--ink); font-size:1rem; margin-bottom:3px;}
+    .connect-guide-head span {display:block; color:#68716a; font-size:.75rem; line-height:1.4;}
+    .connect-badge {flex:0 0 auto; border:1px solid #cdded2; border-radius:999px; background:#fff; color:var(--brand) !important; padding:5px 9px; font-size:.63rem !important; font-weight:800; text-transform:uppercase; letter-spacing:.06em;}
+    .connect-steps {display:grid; grid-template-columns:repeat(4,1fr); border:1px solid #dfe8e1; border-radius:9px; overflow:hidden; background:#fff;}
+    .connect-step {position:relative; min-height:67px; padding:11px 11px 10px 36px; border-right:1px solid #e7ebe7;}
+    .connect-step:last-child {border-right:0;}
+    .connect-step i {position:absolute; left:11px; top:11px; display:flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; background:var(--brand-soft); color:var(--brand); font-size:.62rem; font-style:normal; font-weight:850;}
+    .connect-step b {display:block; font-size:.72rem; margin-bottom:3px;}
+    .connect-step span {display:block; color:#7a827c; font-size:.64rem; line-height:1.35;}
+    .setup-status {border:1px solid var(--line); border-radius:9px; background:#fff; padding:13px 14px; margin:.4rem 0 .8rem;}
+    .setup-status span {display:block; color:#888f89; font-size:.61rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase;}
+    .setup-status b {display:block; color:var(--ink); font-size:.9rem; margin-top:4px;}
     @media (max-width:900px) {
       .workspace-head{align-items:flex-start}
       .today-grid{grid-template-columns:1fr}
@@ -335,6 +350,9 @@ st.markdown(
       [data-testid="stColumn"]{min-width:280px !important; flex:1 1 100% !important;}
       .help-fab{right:14px;bottom:14px}
       .help-fab-panel{width:270px}
+      .connect-steps{grid-template-columns:1fr 1fr}
+      .connect-step:nth-child(2){border-right:0}
+      .connect-step:nth-child(-n+2){border-bottom:1px solid #e7ebe7}
     }
     </style>
     """,
@@ -588,7 +606,33 @@ agent_tab, single_tab, chain_tab, safety_tab, evaluation_tab, review_tab = st.ta
 with agent_tab:
     st.markdown('<div class="eyebrow">Inbox automation</div>', unsafe_allow_html=True)
     st.subheader("Mailbox control center")
-    st.caption("Choose a read-only source, set the course scope and run a traceable inbox scan.")
+    st.caption("Connect once, then AI Scroll can read new course mail without asking you to paste each message.")
+
+    real_mailbox_connected = gmail_authorized or outlook_authorized
+    if not real_mailbox_connected:
+        st.markdown(
+            '<div class="connect-guide">'
+            '<div class="connect-guide-head"><div><b>Connect your first real mailbox</b>'
+            '<span>For a personal Outlook address, the whole setup happens through Microsoft sign-in. AI Scroll only requests permission to read mail.</span>'
+            '</div><span class="connect-badge">About 1 minute</span></div>'
+            '<div class="connect-steps">'
+            '<div class="connect-step"><i>1</i><b>Choose Outlook</b><span>Open the guided setup below.</span></div>'
+            '<div class="connect-step"><i>2</i><b>Sign in to Microsoft</b><span>Use the Outlook account you want to test.</span></div>'
+            '<div class="connect-step"><i>3</i><b>Allow Mail.Read</b><span>Read only; no send or delete permission.</span></div>'
+            '<div class="connect-step"><i>4</i><b>Run the agent</b><span>Return here and start one inbox scan.</span></div>'
+            '</div></div>',
+            unsafe_allow_html=True,
+        )
+        start_outlook_col, demo_help_col = st.columns([1.3, 1])
+        if start_outlook_col.button("Connect an Outlook account", type="primary", use_container_width=True):
+            st.session_state["show_mailbox_setup"] = True
+            st.rerun()
+        if demo_help_col.button("Keep using the demo", type="secondary", use_container_width=True):
+            st.session_state["demo_mailbox_connected"] = True
+            st.session_state["mailbox_provider"] = "demo"
+            st.rerun()
+    elif outlook_authorized and active_provider != "outlook":
+        st.success("Outlook authorization is ready. Select Outlook below to use it for the next scan.")
 
     connector_name = (
         "Gmail · read only" if active_provider == "gmail" and gmail_authorized
@@ -613,6 +657,8 @@ with agent_tab:
             help="Comma-separated. Leave blank to process every detected course code.",
         )
         st.caption("Only the subject, sender and matched course codes are shown in the decision log; ignored message bodies are not displayed.")
+    st.markdown("#### 1 · Choose the mailbox source")
+    st.caption("Only authorized mailboxes can be selected. Use the connection guide if Outlook or Gmail is not ready yet.")
     connect_col, gmail_col, outlook_col = st.columns(3)
     if connect_col.button(
         "Using demo mailbox" if connected and active_provider == "demo" else "Use demo mailbox",
@@ -635,7 +681,7 @@ with agent_tab:
         st.session_state["agent_run"] = None
         st.rerun()
     if outlook_col.button(
-        "Using Outlook" if connected and active_provider == "outlook" else "Use Outlook",
+        "Using Outlook" if connected and active_provider == "outlook" else "Use Outlook" if outlook_authorized else "Outlook · connect below",
         type="secondary",
         use_container_width=True,
         disabled=not outlook_authorized or (connected and active_provider == "outlook"),
@@ -644,8 +690,9 @@ with agent_tab:
         st.session_state["mailbox_provider"] = "outlook"
         st.session_state["agent_run"] = None
         st.rerun()
+    st.markdown("#### 2 · Scan the inbox")
     run_col, real_col = st.columns([2, 1])
-    if run_col.button("Run inbox agent now", type="primary", use_container_width=True, disabled=not connected):
+    if run_col.button("Run inbox scan", type="primary", use_container_width=True, disabled=not connected):
         try:
             connector = (
                 GmailMailboxConnector() if active_provider == "gmail"
@@ -665,12 +712,68 @@ with agent_tab:
             st.rerun()
         except Exception as exc:
             st.error(f"Mailbox run failed: {exc}")
-    if real_col.button("Mailbox setup", type="secondary", use_container_width=True):
+    if real_col.button("Connection guide", type="secondary", use_container_width=True):
         st.session_state["show_mailbox_setup"] = not st.session_state.get("show_mailbox_setup", False)
 
     if st.session_state.get("show_mailbox_setup"):
-        st.markdown("#### Read-only mailbox setup")
-        gmail_setup, outlook_setup = st.tabs(["Gmail", "Outlook / Microsoft 365"])
+        st.markdown("### Connect a mailbox")
+        st.caption("Choose your provider. Personal Outlook is the quickest option on this computer.")
+        outlook_setup, gmail_setup = st.tabs(["Outlook · recommended", "Gmail"])
+        with outlook_setup:
+            st.markdown(
+                '<div class="setup-status"><span>Connection status</span>'
+                f'<b>{"✓ Outlook is authorized" if outlook_authorized else "Outlook is not connected yet"}</b></div>',
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                "1. Select **Sign in with Microsoft** below.\n"
+                "2. In the Microsoft window, enter the Outlook email you want to test.\n"
+                "3. Accept the **Mail.Read** permission. This does not allow sending or deleting mail.\n"
+                "4. Come back here and select **I finished sign-in — check connection**.\n"
+                "5. Select **Use Outlook**, then **Run inbox scan**."
+            )
+            outlook_action, outlook_refresh = st.columns(2)
+            if outlook_action.button(
+                "Sign in with Microsoft",
+                type="primary",
+                use_container_width=True,
+                disabled=outlook_authorized,
+            ):
+                creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+                subprocess.Popen(
+                    [sys.executable, str(ROOT / "scripts" / "authorize_outlook_powershell.py")],
+                    cwd=str(ROOT),
+                    creationflags=creation_flags,
+                )
+                st.info("Microsoft sign-in has opened. Finish the sign-in there, then return to this page.")
+            if outlook_refresh.button("I finished sign-in — check connection", use_container_width=True):
+                st.rerun()
+            st.caption("Requested permission: Microsoft Graph Mail.Read (read only). Credentials stay in Microsoft's local sign-in cache.")
+            with st.expander("Advanced: school or company Microsoft 365"):
+                st.markdown(
+                    "Use this route only when your organization permits app registration. Add a desktop/public client, "
+                    "enable public client flows and grant delegated `Mail.Read`. Many university tenants block this, "
+                    "so a personal Outlook account is recommended for the project demo."
+                )
+                st.link_button(
+                    "Open Microsoft app registrations",
+                    "https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade",
+                    use_container_width=True,
+                )
+                configured_client = microsoft_client_id()
+                entered_client = st.text_input(
+                    "Application (client) ID",
+                    value=configured_client,
+                    placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+                )
+                entered_tenant = st.text_input(
+                    "Directory (tenant) ID",
+                    value=microsoft_tenant_id(),
+                )
+                if st.button("Save Microsoft app settings", use_container_width=True, disabled=not entered_client.strip()):
+                    save_microsoft_config(entered_client, entered_tenant)
+                    st.success(f"Saved locally to {microsoft_config_path()}")
+                    st.rerun()
         with gmail_setup:
             st.caption("AI Scroll requests only `gmail.readonly`. It cannot send, delete or modify email.")
             setup_left, setup_right = st.columns([1.45, 1])
@@ -707,63 +810,10 @@ with agent_tab:
                 if st.button("Refresh Gmail status", use_container_width=True):
                     st.rerun()
                 st.caption(f"Token location: {gmail_token_path()}")
-        with outlook_setup:
-            st.caption("AI Scroll requests Microsoft Graph `Mail.Read`. It cannot send, delete or modify email.")
-            outlook_left, outlook_right = st.columns([1.45, 1])
-            with outlook_left:
-                st.markdown(
-                    "**Recommended for a personal Outlook account**\n\n"
-                    "Use Microsoft's official Graph sign-in. No app registration or client secret is required. "
-                    "Choose the personal Outlook account and approve read-only mail access."
-                )
-                if st.button(
-                    "Authorize personal Outlook",
-                    type="primary",
-                    use_container_width=True,
-                    disabled=outlook_authorized,
-                ):
-                    creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
-                    subprocess.Popen(
-                        [sys.executable, str(ROOT / "scripts" / "authorize_outlook_powershell.py")],
-                        cwd=str(ROOT),
-                        creationflags=creation_flags,
-                    )
-                    st.info("Microsoft authorization opened. Choose the personal Outlook account, approve Mail.Read, then refresh status.")
-                with st.expander("Advanced: custom Entra app"):
-                    st.markdown(
-                        "Use this only when an organization permits app registration. Add a desktop/public client, "
-                        "enable public client flows and grant delegated `Mail.Read`."
-                    )
-                    st.link_button(
-                        "Open Microsoft app registrations",
-                        "https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade",
-                        use_container_width=True,
-                    )
-                    configured_client = microsoft_client_id()
-                    entered_client = st.text_input(
-                        "Application (client) ID",
-                        value=configured_client,
-                        placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-                    )
-                    entered_tenant = st.text_input(
-                        "Directory (tenant) ID",
-                        value=microsoft_tenant_id(),
-                    )
-                    if st.button("Save Microsoft app settings", use_container_width=True, disabled=not entered_client.strip()):
-                        save_microsoft_config(entered_client, entered_tenant)
-                        st.success(f"Saved locally to {microsoft_config_path()}")
-                        st.rerun()
-            with outlook_right:
-                st.metric("Outlook account", "Authorized" if outlook_authorized else "Not authorized")
-                st.metric("Outlook token", "Authorized" if outlook_authorized else "Not authorized")
-                if st.button("Refresh Outlook status", use_container_width=True):
-                    st.rerun()
-                st.caption(f"Local authorization marker: {outlook_graph_marker_path()}")
-
     agent_run = st.session_state.get("agent_run")
     if agent_run is None:
         st.markdown(
-            '<div class="agent-run"><b>Ready for an autonomous run</b><br><span>Connect the demo mailbox, then select “Run inbox agent now”. You will not paste any individual email.</span></div>',
+            f'<div class="agent-run"><b>{"Ready to scan" if connected else "Mailbox connection required"}</b><br><span>{"Select Run inbox scan. You will not paste any individual email." if connected else "Open the connection guide above and complete Microsoft or Google sign-in first."}</span></div>',
             unsafe_allow_html=True,
         )
     else:

@@ -8,3 +8,6 @@ logs/*.csv
 logs/*.log
 data/private/
 05_report/_qa_render/
+06_demo/.pptx-build/
+06_demo/.pptx-finalizer/
+.chart-data-*/

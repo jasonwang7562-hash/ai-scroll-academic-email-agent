@@ -50,7 +50,9 @@ from app.sample_data import SAMPLE_BODY, SAMPLE_SENDER, SAMPLE_SUBJECT
 
 
 ROOT = Path(__file__).resolve().parents[1]
-st.set_page_config(page_title="AI Scroll", page_icon="📬", layout="wide")
+st.set_page_config(
+    page_title="AI Scroll", page_icon="📬", layout="wide", initial_sidebar_state="collapsed"
+)
 st.markdown(
     """
     <style>
@@ -444,6 +446,75 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+st.markdown(
+    """
+    <style>
+    /* Inbox-first product shell, based on the approved AI Scroll mock-up. */
+    .block-container {max-width:1720px; padding:1rem 1.2rem 3rem;}
+    [data-testid="stHeader"] {height:2.6rem; background:rgba(244,248,251,.78);}
+    .mail-brandbar {display:flex; align-items:center; justify-content:space-between; margin:0 0 .65rem; padding:0 .2rem;}
+    .mail-brandbar b {font-size:1.2rem; color:#102a4a; letter-spacing:-.03em;}
+    .mail-brandbar b span {color:#0c9b91;}
+    .mail-brandbar small {color:#718198; font-weight:650;}
+    .mail-pane {height:690px; overflow:hidden; background:#fff; border:1px solid #dbe5ee; box-shadow:0 14px 36px rgba(29,62,91,.08);}
+    .mail-pane.nav {border-radius:22px 0 0 22px; background:linear-gradient(180deg,#102c4c,#112641); color:#fff; border-color:#173b5e; padding:23px 17px;}
+    .mail-pane.message {border-radius:0; padding:22px 25px;}
+    .mail-pane.plan {border-radius:0 22px 22px 0; padding:20px; background:#fbfdff;}
+    .nav-logo {display:flex; align-items:center; gap:10px; font-size:1.28rem; font-weight:850; margin-bottom:24px;}
+    .nav-logo i {display:grid; place-items:center; width:35px; height:35px; border-radius:12px; background:#45dac8; color:#0a3650; font-style:normal;}
+    .nav-tag {display:block; color:#a9bfd2; font-size:.7rem; line-height:1.4; margin:-17px 0 21px 45px;}
+    .nav-item {display:flex; align-items:center; gap:10px; border-radius:11px; padding:10px 11px; color:#c8d8e5; font-size:.78rem; font-weight:650; margin-bottom:5px;}
+    .nav-item.active {background:#1b5874; color:#fff; box-shadow:inset 3px 0 0 #45dac8;}
+    .nav-count {margin-left:auto; min-width:23px; text-align:center; border-radius:999px; background:#2b8196; padding:2px 6px; font-size:.64rem;}
+    .nav-section {margin:22px 10px 9px; color:#7693aa; font-size:.6rem; font-weight:850; letter-spacing:.12em; text-transform:uppercase;}
+    .nav-mini {border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:11px 12px; margin:6px 0; background:rgba(255,255,255,.035);}
+    .nav-mini.active {background:#e7f4f6; border-color:#e7f4f6;}
+    .nav-mini b {display:block; color:#fff; font-size:.74rem; margin-bottom:3px;}
+    .nav-mini.active b {color:#123654;}
+    .nav-mini span {display:block; color:#91a9bb; font-size:.63rem; line-height:1.3;}
+    .nav-mini.active span {color:#527189;}
+    .message-tools {color:#60738b; font-size:.72rem; border-bottom:1px solid #e7edf3; padding-bottom:13px; margin-bottom:21px; word-spacing:13px;}
+    .sender-row {display:grid; grid-template-columns:45px 1fr auto; gap:11px; align-items:center; margin-bottom:21px;}
+    .sender-avatar {display:grid; place-items:center; width:43px; height:43px; border-radius:50%; background:#e7f1f7; color:#173c5b; font-size:1.05rem;}
+    .sender-row b {display:block; color:#102a4a; font-size:.86rem;}
+    .sender-row span {color:#78889b; font-size:.67rem;}
+    .message-time {font-size:.66rem !important;}
+    .message-subject {font-size:1.62rem; line-height:1.15; letter-spacing:-.035em; font-weight:850; color:#0d2442; margin:0 0 22px;}
+    .message-copy {font-size:.89rem; line-height:1.62; color:#33445b;}
+    .message-copy strong {color:#102a4a;}
+    .attachment {display:grid; grid-template-columns:38px 1fr; gap:10px; align-items:center; margin-top:25px; border-top:1px solid #e5ebf1; padding-top:18px;}
+    .attachment-icon {display:grid; place-items:center; width:35px; height:35px; border-radius:9px; background:#f05d5e; color:white; font-weight:850;}
+    .attachment b {display:block; color:#193550; font-size:.73rem;}
+    .attachment span {color:#7e8da0; font-size:.63rem;}
+    .plan-head {display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:13px;}
+    .plan-logo {display:flex; align-items:center; gap:8px; color:#102a4a; font-weight:850; font-size:.88rem;}
+    .plan-logo i {color:#0b9e95; font-style:normal; font-size:1.05rem;}
+    .detect-pill {border-radius:999px; background:#dff7f3; color:#08776f; padding:5px 9px; font-size:.58rem; font-weight:850;}
+    .plan-card {border:1px solid #cfe5ea; border-radius:17px; background:#fff; padding:18px;}
+    .plan-title-row {display:grid; grid-template-columns:43px 1fr; gap:11px; align-items:center; margin-bottom:15px;}
+    .plan-icon {display:grid; place-items:center; width:42px; height:42px; border-radius:12px; background:#d9f5ef; font-size:1.15rem;}
+    .plan-title-row b {display:block; color:#0d2a50; font-size:1.08rem; line-height:1.2;}
+    .deadline-badge {display:inline-block; margin-top:5px; border-radius:8px; background:#e2f7f3; color:#08766f; padding:4px 7px; font-size:.64rem; font-weight:800;}
+    .action-label {font-size:.96rem; color:#102a4a; font-weight:850; margin:14px 0 9px;}
+    .action-label small {color:#75869a; font-size:.62rem; font-weight:650; margin-left:5px;}
+    .plan-step {display:grid; grid-template-columns:26px 1fr auto; gap:9px; align-items:center; min-height:46px; position:relative;}
+    .plan-step:not(:last-child):before {content:""; position:absolute; left:12px; top:34px; bottom:-12px; width:2px; background:#61cfc2;}
+    .step-no {display:grid; place-items:center; width:25px; height:25px; border-radius:50%; background:#078a83; color:#fff; font-size:.66rem; font-weight:850; z-index:1;}
+    .step-copy b {display:block; color:#17314f; font-size:.73rem;}
+    .step-copy span {display:block; color:#8795a6; font-size:.58rem; margin-top:2px;}
+    .step-state {border-radius:999px; background:#e7f1ff; color:#326daf; padding:4px 7px; font-size:.56rem; font-weight:800;}
+    .evidence-strip {margin-top:12px; border-radius:10px; background:#eef8fb; color:#28445f; padding:10px 11px; font-size:.62rem; line-height:1.4;}
+    .approval-lock {display:grid; grid-template-columns:29px 1fr; gap:9px; align-items:center; margin-top:11px; border-radius:12px; background:#e9f8f5; padding:10px 12px;}
+    .approval-lock i {display:grid; place-items:center; width:28px; height:28px; border:2px solid #13857d; border-radius:9px; color:#13857d; font-style:normal; font-weight:900;}
+    .approval-lock b {display:block; color:#183c55; font-size:.68rem;}
+    .approval-lock span {display:block; color:#698396; font-size:.55rem; margin-top:2px;}
+    .shell-note {margin:.65rem 0 1rem; color:#718198; font-size:.68rem; text-align:right;}
+    @media (max-width:1100px) {.mail-pane{height:auto;min-height:560px}.mail-pane.nav,.mail-pane.message,.mail-pane.plan{border-radius:18px;margin-bottom:8px}}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 def show_single_result(task):
     if task.needs_clarification:
@@ -614,43 +685,6 @@ connection_class = "" if connected else " off"
 agent_state_label = "Ready" if connected else "Setup"
 
 st.markdown(
-    f"""
-    <div class="workspace-head">
-      <div>
-        <div class="workspace-brand">AI <span>Scroll</span></div>
-        <div class="workspace-sub">Academic command center · evidence before action <span class="info-dot" title="AI Scroll keeps the original email evidence visible before it proposes an external action.">?</span></div>
-      </div>
-      <div class="sync-pill"><span class="sync-dot{connection_class}"></span>{html.escape(mailbox_status)}</div>
-    </div>
-    <div class="today-grid">
-      <section class="today-focus">
-        <div class="today-kicker">Today · {html.escape(today_label)}</div>
-        <h1>{html.escape(focus_title)}</h1>
-        <p>{html.escape(focus_copy)}</p>
-        <div class="focus-tags">
-          <span class="focus-tag">{prepared_count} timeline items</span>
-          <span class="focus-tag">{attention_count} awaiting review</span>
-          <span class="focus-tag">Human approval required</span>
-        </div>
-      </section>
-      <aside class="activity-card">
-        <div class="activity-head"><div>Agent activity <span class="info-dot" title="Shows what the latest mailbox scan inspected, consolidated and left for review.">?</span></div><span class="state-pill">{agent_state_label}</span></div>
-        <div class="activity-stat"><b>{scanned_count}</b><span>messages inspected in the latest run</span></div>
-        <div class="activity-stat"><b>{prepared_count}</b><span>course items consolidated for review</span></div>
-        <div class="activity-stat"><b>{attention_count}</b><span>items waiting for your decision</span></div>
-        <div class="safety-lock">🔒 0 unauthorized calendar writes</div>
-      </aside>
-    </div>
-    <div class="quick-strip">
-      <div class="quick-card"><div><span>Next deadline</span><b>{next_deadline_title}</b></div><div class="quick-value">{next_deadline_value}</div></div>
-      <div class="quick-card"><div><span>Course scope</span><b>{scope_display}</b></div><div class="quick-value">{len([c for c in st.session_state['course_scope'].split(',') if c.strip()])}</div></div>
-      <div class="quick-card"><div><span>Review queue <span class="info-dot" title="Items waiting for you to verify the source evidence before a calendar action.">?</span></span><b>Evidence required before action</b></div><div class="quick-value">{attention_count}</div></div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-st.markdown(
     """
     <div class="help-fab">
       <details>
@@ -711,10 +745,10 @@ with st.sidebar:
     with st.expander("Urgency policy"):
         st.markdown("- **High:** within 72 hours\n- **Medium:** 4–7 days\n- **Low:** more than 7 days\n- **Clarification:** unsafe to infer")
 
-agent_tab, single_tab, chain_tab, safety_tab, evaluation_tab, review_tab = st.tabs(
+single_tab, agent_tab, chain_tab, safety_tab, evaluation_tab, review_tab = st.tabs(
     [
-        "Today / 今日",
         "Inbox / 邮件",
+        "Agent setup / 设置",
         "Timeline / 时间线",
         "Calendar review / 日历审核",
         "Evaluation / 评估",
@@ -1046,35 +1080,138 @@ with agent_tab:
         )
 
 with single_tab:
-    rail, email_panel, assistant_panel = st.columns([0.62, 1.25, 1.05], gap="large")
-    with rail:
-        st.markdown('<div class="section-label">Academic inbox</div>', unsafe_allow_html=True)
-        st.markdown('<div class="view-pills"><span class="view-pill active">All · 3</span><span class="view-pill">Deadlines · 1</span><span class="view-pill">Review · 1</span></div>', unsafe_allow_html=True)
-        st.markdown('<div class="rail-card active"><b>PE6201</b><span>Individual Project · due soon</span></div>', unsafe_allow_html=True)
-        st.markdown('<div class="rail-card"><b>Course updates</b><span>1 deadline change detected</span></div>', unsafe_allow_html=True)
-        st.markdown('<div class="rail-card"><b>Needs review</b><span>Calendar proposals waiting</span></div>', unsafe_allow_html=True)
-        st.markdown('<div class="section-label" style="margin-top:1.25rem">Status</div>', unsafe_allow_html=True)
-        st.markdown('<span class="badge badge-amber">Deadline detected</span><br><br><span class="badge badge-green">Evidence found</span>', unsafe_allow_html=True)
-    with email_panel:
-        st.markdown('<div class="section-label">Selected academic email</div>', unsafe_allow_html=True)
-        st.markdown('<div class="source-context"><div class="source-avatar">PE</div><div class="source-main"><b>Course announcement</b>Primary source · selected for extraction</div><span class="badge badge-green">Ready</span></div>', unsafe_allow_html=True)
-        subject = st.text_input("Subject", value=SAMPLE_SUBJECT)
-        sender = st.text_input("Sender", value=SAMPLE_SENDER)
-        body = st.text_area("Email body", value=SAMPLE_BODY, height=280)
-        run = st.button("Analyze email", type="primary", use_container_width=True)
-    if run:
+    current_run = st.session_state.get("agent_run")
+    current_item = next(
+        (item for item in current_run.timeline if item.status == "active"), None
+    ) if current_run else None
+    if current_item:
+        shell_course = current_item.course
+        shell_title = current_item.task_title
+        shell_deadline = (
+            datetime.fromisoformat(current_item.deadline_iso).strftime("%d %b %Y, %I:%M %p")
+            if current_item.deadline_iso else "Needs clarification"
+        )
+        latest_evidence = current_item.evidence_history[-1]
+        shell_subject = latest_evidence.source_subject
+        shell_evidence = latest_evidence.evidence_quote
+    else:
+        shell_course = "PE6201"
+        shell_title = "Course Project"
+        shell_deadline = "4 Oct 2026, 11:59 PM"
+        shell_subject = "PE6201 Course Project"
+        shell_evidence = "The PE6201 project deadline has been extended to 4 October 2026 at 11:59 PM SGT."
+
+    plan_rows = []
+    cached_plan = st.session_state.get("backward_plan")
+    if current_item and cached_plan and cached_plan.get("key", (None,))[0] == current_item.thread_id:
+        for milestone in cached_plan["value"].milestones:
+            plan_rows.append((milestone.title.split(" / ")[0], milestone.start.strftime("%d %b · %H:%M")))
+    if not plan_rows:
+        plan_rows = [
+            ("Confirm requirements", "Read brief"),
+            ("Research and outline", "Plan work"),
+            ("Finish prototype", "Build"),
+            ("Run evaluation", "Verify"),
+            ("Complete report & demo", "Submit"),
+        ]
+    plan_rows = plan_rows[:5]
+    steps_html = "".join(
+        '<div class="plan-step">'
+        f'<span class="step-no">{index}</span>'
+        f'<div class="step-copy"><b>{html.escape(title)}</b><span>{html.escape(schedule)}</span></div>'
+        '<span class="step-state">To do</span></div>'
+        for index, (title, schedule) in enumerate(plan_rows, 1)
+    )
+
+    st.markdown(
+        '<div class="mail-brandbar"><b>AI <span>Scroll</span> · Academic inbox</b>'
+        f'<small>{html.escape(mailbox_status)} · {"Live model" if mode == "Live model" else "Safe demo"}</small></div>',
+        unsafe_allow_html=True,
+    )
+    nav_col, message_col, plan_col = st.columns([0.72, 1.55, 1.35], gap="small")
+    with nav_col:
+        st.markdown(
+            '<section class="mail-pane nav">'
+            '<div class="nav-logo"><i>↗</i>AI Scroll</div><span class="nav-tag">Your academic<br>email agent</span>'
+            '<div class="nav-item active">▣&nbsp; Inbox <span class="nav-count">12</span></div>'
+            '<div class="nav-item">☆&nbsp; Starred</div><div class="nav-item">◷&nbsp; Snoozed</div>'
+            '<div class="nav-item">△&nbsp; Sent</div><div class="nav-item">▤&nbsp; Drafts</div>'
+            '<div class="nav-section">Academic mail</div>'
+            f'<div class="nav-mini active"><b>{html.escape(shell_course)} Course Team</b><span>{html.escape(shell_subject)}<br>Deadline update detected</span></div>'
+            '<div class="nav-mini"><b>Library Services</b><span>New resources for your studies</span></div>'
+            '<div class="nav-mini"><b>Student Support</b><span>Wellbeing resources</span></div>'
+            '<div class="nav-mini"><b>Registrar</b><span>Semester enrolment update</span></div>'
+            '</section>',
+            unsafe_allow_html=True,
+        )
+    with message_col:
+        st.markdown(
+            '<section class="mail-pane message">'
+            '<div class="message-tools">↶ Reply &nbsp; ↶ Reply all &nbsp; ↗ Forward &nbsp; ···</div>'
+            f'<div class="sender-row"><div class="sender-avatar">🎓</div><div><b>{html.escape(shell_course)} Course Team</b><span>to me · academic announcement</span></div><span class="message-time">10:24 AM</span></div>'
+            f'<div class="message-subject">{html.escape(shell_title)}</div>'
+            '<div class="message-copy">Dear student,<br><br>'
+            f'AI Scroll found an assessed task in this message. <strong>{html.escape(shell_evidence)}</strong><br><br>'
+            'Please refer to the course brief for the complete requirements. The original evidence remains attached to every proposed calendar action.<br><br>'
+            f'Best regards,<br>{html.escape(shell_course)} Course Team</div>'
+            '<div class="attachment"><div class="attachment-icon">▰</div><div><b>Course_Project_Brief.pdf</b><span>Source attachment · retained for review</span></div></div>'
+            '</section>',
+            unsafe_allow_html=True,
+        )
+    with plan_col:
+        st.markdown(
+            '<section class="mail-pane plan"><div class="plan-head"><div class="plan-logo"><i>✦</i> AI Scroll</div><span class="detect-pill">Assignment detected</span></div>'
+            '<div class="plan-card"><div class="plan-title-row"><div class="plan-icon">▣</div><div>'
+            f'<b>{html.escape(shell_course)} · {html.escape(shell_title)}</b><span class="deadline-badge">Due: {html.escape(shell_deadline)}</span></div></div>'
+            '<div class="action-label">Your action plan <small>任务行动卡</small></div>'
+            f'{steps_html}'
+            f'<div class="evidence-strip"><b>Evidence:</b> {html.escape(shell_evidence)}</div>'
+            '</div><div class="approval-lock"><i>✓</i><div><b>Human approval required · 需要确认</b><span>Review the source before anything is added to your calendar.</span></div></div>'
+            '</section>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown('<div class="shell-note">Mailbox is read only · Calendar writes remain locked until approval</div>', unsafe_allow_html=True)
+    scan_col, edit_col, review_col = st.columns([1.3, 1, 1])
+    if scan_col.button("✦ Scan inbox & refresh plan / 扫描并更新计划", type="primary", use_container_width=True):
         try:
-            st.session_state["task"] = extract(EmailInput(subject=subject, sender=sender, body=body), mode=mode)
+            connector = (
+                GmailMailboxConnector() if active_provider == "gmail"
+                else OutlookMailboxConnector() if active_provider == "outlook"
+                else DemoMailboxConnector()
+            )
+            allowed_courses = {
+                course.strip().upper()
+                for course in st.session_state["course_scope"].split(",") if course.strip()
+            }
+            st.session_state["agent_run"] = InboxAgent(
+                connector, allowed_courses=allowed_courses, extraction_mode=mode
+            ).run(now=datetime.now().astimezone())
+            st.rerun()
+        except Exception as exc:
+            st.error(f"Mailbox run failed: {exc}")
+    if edit_col.button("Use sample email / 使用示例邮件", use_container_width=True):
+        try:
+            st.session_state["task"] = extract(
+                EmailInput(subject=SAMPLE_SUBJECT, sender=SAMPLE_SENDER, body=SAMPLE_BODY), mode=mode
+            )
+            st.success("Sample email analyzed. Open Calendar review to inspect the proposal.")
         except Exception as exc:
             st.error(f"Extraction failed: {exc}")
-    with assistant_panel:
-        st.markdown('<div class="section-label">AI extracted details</div>', unsafe_allow_html=True)
-        task = st.session_state.get("task")
-        show_processing_route(task)
-        if task is None:
-            st.markdown('<div class="empty-state"><b>Ready to analyze</b>Select “Analyze email” to extract the course, task, deadline, priority and exact source evidence.</div>', unsafe_allow_html=True)
-        else:
-            show_single_result(task)
+    review_col.info("Next: open **Calendar review / 日历审核** to approve the plan.")
+
+    with st.expander("Manual email test / 手动邮件测试"):
+        subject = st.text_input("Subject", value=SAMPLE_SUBJECT, key="shell_subject")
+        sender = st.text_input("Sender", value=SAMPLE_SENDER, key="shell_sender")
+        body = st.text_area("Email body", value=SAMPLE_BODY, height=180, key="shell_body")
+        if st.button("Analyze this email", key="shell_analyze", use_container_width=True):
+            try:
+                st.session_state["task"] = extract(
+                    EmailInput(subject=subject, sender=sender, body=body), mode=mode
+                )
+                st.rerun()
+            except Exception as exc:
+                st.error(f"Extraction failed: {exc}")
 
 with chain_tab:
     st.markdown('<div class="section-label">Update detector</div>', unsafe_allow_html=True)

@@ -1,6 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { Presentation, PresentationFile } from "@oai/artifact-tool";
 
 const projectRoot = path.resolve(process.cwd());
@@ -9,7 +11,7 @@ const SKILL_DIR = "C:/Users/admin/.codex/plugins/cache/openai-primary-runtime/pr
 const RUNTIME_PYTHON = "C:/Users/admin/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe";
 const buildDir = path.join(workspaceDir, ".pptx-build");
 const stagingDir = path.join(workspaceDir, ".pptx-finalizer");
-const FINAL_PPTX = path.join(workspaceDir, "deliverables", "AI_Scroll_5_Minute_Presentation_v3.pptx");
+const FINAL_PPTX = path.join(workspaceDir, "deliverables", "AI_Scroll_5_Minute_Presentation_v4.pptx");
 await fs.mkdir(buildDir, { recursive: true });
 
 const { resolvePresentationFont, applyPresentationChartFont, finalizePresentation } = await import(
@@ -267,6 +269,10 @@ await fs.mkdir(stagingDir, { recursive: true });
 await fs.mkdir(path.dirname(FINAL_PPTX), { recursive: true });
 const candidatePath = path.join(stagingDir, "AI_Scroll_candidate.pptx");
 await (await PresentationFile.exportPptx(deck)).save(candidatePath);
+await promisify(execFile)(RUNTIME_PYTHON, [
+  path.join(projectRoot, "06_demo", "add_ppt_transitions.py"),
+  candidatePath,
+]);
 
 const result = await finalizePresentation({
   workspaceDir,
@@ -282,7 +288,7 @@ const result = await finalizePresentation({
   materializeLiteralChartWorkbooks: true,
   fontPolicy: { basis: "design", families: [family] },
   verifyArtifactToolImport: true,
-  receiptPath: path.join(stagingDir, "AI_Scroll_5_Minute_Presentation_v3.validation.json"),
+  receiptPath: path.join(stagingDir, "AI_Scroll_5_Minute_Presentation_v4.validation.json"),
 });
 
 console.log(JSON.stringify({ finalPath: FINAL_PPTX, font: family, result }, null, 2));

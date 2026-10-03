@@ -9,7 +9,7 @@ const SKILL_DIR = "C:/Users/admin/.codex/plugins/cache/openai-primary-runtime/pr
 const RUNTIME_PYTHON = "C:/Users/admin/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe";
 const buildDir = path.join(workspaceDir, ".pptx-build");
 const stagingDir = path.join(workspaceDir, ".pptx-finalizer");
-const FINAL_PPTX = path.join(workspaceDir, "deliverables", "AI_Scroll_5_Minute_Presentation_v2.pptx");
+const FINAL_PPTX = path.join(workspaceDir, "deliverables", "AI_Scroll_5_Minute_Presentation_v3.pptx");
 await fs.mkdir(buildDir, { recursive: true });
 
 const { resolvePresentationFont, applyPresentationChartFont, finalizePresentation } = await import(
@@ -25,7 +25,7 @@ const C = {
 };
 
 const coverBytes = new Uint8Array(await fs.readFile(path.join(projectRoot, "06_demo", "assets", "ai_scroll_cover.png")));
-const uiBytes = new Uint8Array(await fs.readFile(path.join(projectRoot, "06_demo", "ai_scroll_action_plan_mockup.png")));
+const uiBytes = new Uint8Array(await fs.readFile(path.join(projectRoot, "06_demo", "ui_final_wide.png")));
 
 function shape(slide, geometry, x, y, w, h, fill, line = "none", radius = undefined) {
   return slide.shapes.add({
@@ -282,7 +282,7 @@ const result = await finalizePresentation({
   materializeLiteralChartWorkbooks: true,
   fontPolicy: { basis: "design", families: [family] },
   verifyArtifactToolImport: true,
-  receiptPath: path.join(stagingDir, "AI_Scroll_5_Minute_Presentation_v2.validation.json"),
+  receiptPath: path.join(stagingDir, "AI_Scroll_5_Minute_Presentation_v3.validation.json"),
 });
 
 console.log(JSON.stringify({ finalPath: FINAL_PPTX, font: family, result }, null, 2));

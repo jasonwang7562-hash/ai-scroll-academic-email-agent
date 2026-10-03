@@ -456,13 +456,15 @@ st.markdown(
     .mail-brandbar b {font-size:1.2rem; color:#102a4a; letter-spacing:-.03em;}
     .mail-brandbar b span {color:#0c9b91;}
     .mail-brandbar small {color:#718198; font-weight:650;}
-    .mail-pane {height:690px; overflow:hidden; background:#fff; border:1px solid #dbe5ee; box-shadow:0 14px 36px rgba(29,62,91,.08);}
-    .mail-pane.nav {border-radius:22px 0 0 22px; background:linear-gradient(180deg,#102c4c,#112641); color:#fff; border-color:#173b5e; padding:23px 17px;}
-    .mail-pane.message {border-radius:0; padding:22px 25px;}
-    .mail-pane.plan {border-radius:0 22px 22px 0; padding:20px; background:#fbfdff;}
+    .mail-shell {display:grid; grid-template-columns:255px minmax(410px,1fr) minmax(430px,1.08fr); gap:12px; align-items:stretch;}
+    .mail-pane {height:690px; overflow:hidden; background:#fff; border:1px solid #dbe5ee; border-radius:22px; box-shadow:0 14px 36px rgba(29,62,91,.08);}
+    .mail-pane.nav {background:linear-gradient(180deg,#102c4c,#112641); color:#fff; border-color:#173b5e; padding:23px 17px;}
+    .mail-pane.message {padding:22px 25px;}
+    .mail-pane.plan {padding:20px; background:#fbfdff;}
     .nav-logo {display:flex; align-items:center; gap:10px; font-size:1.28rem; font-weight:850; margin-bottom:24px;}
     .nav-logo i {display:grid; place-items:center; width:35px; height:35px; border-radius:12px; background:#45dac8; color:#0a3650; font-style:normal;}
     .nav-tag {display:block; color:#a9bfd2; font-size:.7rem; line-height:1.4; margin:-17px 0 21px 45px;}
+    .compose-button {display:flex; align-items:center; justify-content:center; gap:8px; margin:0 0 18px; padding:11px; border-radius:12px; background:linear-gradient(135deg,#58e0d0,#46d4c4); color:#0b3550; font-size:.78rem; font-weight:850;}
     .nav-item {display:flex; align-items:center; gap:10px; border-radius:11px; padding:10px 11px; color:#c8d8e5; font-size:.78rem; font-weight:650; margin-bottom:5px;}
     .nav-item.active {background:#1b5874; color:#fff; box-shadow:inset 3px 0 0 #45dac8;}
     .nav-count {margin-left:auto; min-width:23px; text-align:center; border-radius:999px; background:#2b8196; padding:2px 6px; font-size:.64rem;}
@@ -473,6 +475,7 @@ st.markdown(
     .nav-mini.active b {color:#123654;}
     .nav-mini span {display:block; color:#91a9bb; font-size:.63rem; line-height:1.3;}
     .nav-mini.active span {color:#527189;}
+    .nav-footer {margin-top:20px; padding-top:14px; border-top:1px solid rgba(255,255,255,.08);}
     .message-tools {color:#60738b; font-size:.72rem; border-bottom:1px solid #e7edf3; padding-bottom:13px; margin-bottom:21px; word-spacing:13px;}
     .sender-row {display:grid; grid-template-columns:45px 1fr auto; gap:11px; align-items:center; margin-bottom:21px;}
     .sender-avatar {display:grid; place-items:center; width:43px; height:43px; border-radius:50%; background:#e7f1f7; color:#173c5b; font-size:1.05rem;}
@@ -508,8 +511,26 @@ st.markdown(
     .approval-lock i {display:grid; place-items:center; width:28px; height:28px; border:2px solid #13857d; border-radius:9px; color:#13857d; font-style:normal; font-weight:900;}
     .approval-lock b {display:block; color:#183c55; font-size:.68rem;}
     .approval-lock span {display:block; color:#698396; font-size:.55rem; margin-top:2px;}
+    .calendar-cta {display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px; padding:12px 14px; border-radius:999px; background:linear-gradient(135deg,#10a79d,#078c86); color:#fff; font-size:.78rem; font-weight:850; box-shadow:0 8px 18px rgba(7,140,134,.18);}
+    .approval-lock {grid-template-columns:29px 1fr auto;}
+    .approval-action {border:1px solid #117d78; border-radius:9px; padding:7px 10px; color:#0c5261; background:#fff; font-size:.58rem; font-weight:850; white-space:nowrap;}
     .shell-note {margin:.65rem 0 1rem; color:#718198; font-size:.68rem; text-align:right;}
-    @media (max-width:1100px) {.mail-pane{height:auto;min-height:560px}.mail-pane.nav,.mail-pane.message,.mail-pane.plan{border-radius:18px;margin-bottom:8px}}
+    @media (max-width:1100px) {
+      .mail-shell {grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+      .mail-pane {height:auto; min-height:610px; border-radius:18px;}
+      .mail-pane.nav {display:none;}
+      .mail-pane.message {order:1;}
+      .mail-pane.plan {order:2;}
+    }
+    @media (max-width:760px) {
+      .block-container {padding-left:.7rem; padding-right:.7rem;}
+      .mail-shell {grid-template-columns:1fr;}
+      .mail-pane.message {min-height:590px;}
+      .mail-pane.plan {min-height:650px;}
+      .message-subject {font-size:1.35rem;}
+      .mail-brandbar {align-items:flex-start; gap:8px;}
+      .mail-brandbar small {text-align:right; font-size:.62rem;}
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -1128,48 +1149,44 @@ with single_tab:
         f'<small>{html.escape(mailbox_status)} · {"Live model" if mode == "Live model" else "Safe demo"}</small></div>',
         unsafe_allow_html=True,
     )
-    nav_col, message_col, plan_col = st.columns([0.72, 1.55, 1.35], gap="small")
-    with nav_col:
-        st.markdown(
-            '<section class="mail-pane nav">'
-            '<div class="nav-logo"><i>↗</i>AI Scroll</div><span class="nav-tag">Your academic<br>email agent</span>'
-            '<div class="nav-item active">▣&nbsp; Inbox <span class="nav-count">12</span></div>'
-            '<div class="nav-item">☆&nbsp; Starred</div><div class="nav-item">◷&nbsp; Snoozed</div>'
-            '<div class="nav-item">△&nbsp; Sent</div><div class="nav-item">▤&nbsp; Drafts</div>'
-            '<div class="nav-section">Academic mail</div>'
-            f'<div class="nav-mini active"><b>{html.escape(shell_course)} Course Team</b><span>{html.escape(shell_subject)}<br>Deadline update detected</span></div>'
-            '<div class="nav-mini"><b>Library Services</b><span>New resources for your studies</span></div>'
-            '<div class="nav-mini"><b>Student Support</b><span>Wellbeing resources</span></div>'
-            '<div class="nav-mini"><b>Registrar</b><span>Semester enrolment update</span></div>'
-            '</section>',
-            unsafe_allow_html=True,
-        )
-    with message_col:
-        st.markdown(
-            '<section class="mail-pane message">'
-            '<div class="message-tools">↶ Reply &nbsp; ↶ Reply all &nbsp; ↗ Forward &nbsp; ···</div>'
-            f'<div class="sender-row"><div class="sender-avatar">🎓</div><div><b>{html.escape(shell_course)} Course Team</b><span>to me · academic announcement</span></div><span class="message-time">10:24 AM</span></div>'
-            f'<div class="message-subject">{html.escape(shell_title)}</div>'
-            '<div class="message-copy">Dear student,<br><br>'
-            f'AI Scroll found an assessed task in this message. <strong>{html.escape(shell_evidence)}</strong><br><br>'
-            'Please refer to the course brief for the complete requirements. The original evidence remains attached to every proposed calendar action.<br><br>'
-            f'Best regards,<br>{html.escape(shell_course)} Course Team</div>'
-            '<div class="attachment"><div class="attachment-icon">▰</div><div><b>Course_Project_Brief.pdf</b><span>Source attachment · retained for review</span></div></div>'
-            '</section>',
-            unsafe_allow_html=True,
-        )
-    with plan_col:
-        st.markdown(
-            '<section class="mail-pane plan"><div class="plan-head"><div class="plan-logo"><i>✦</i> AI Scroll</div><span class="detect-pill">Assignment detected</span></div>'
-            '<div class="plan-card"><div class="plan-title-row"><div class="plan-icon">▣</div><div>'
-            f'<b>{html.escape(shell_course)} · {html.escape(shell_title)}</b><span class="deadline-badge">Due: {html.escape(shell_deadline)}</span></div></div>'
-            '<div class="action-label">Your action plan <small>任务行动卡</small></div>'
-            f'{steps_html}'
-            f'<div class="evidence-strip"><b>Evidence:</b> {html.escape(shell_evidence)}</div>'
-            '</div><div class="approval-lock"><i>✓</i><div><b>Human approval required · 需要确认</b><span>Review the source before anything is added to your calendar.</span></div></div>'
-            '</section>',
-            unsafe_allow_html=True,
-        )
+    st.markdown(
+        '<div class="mail-shell">'
+        '<section class="mail-pane nav">'
+        '<div class="nav-logo"><i>↗</i>AI Scroll</div><span class="nav-tag">Your academic<br>email agent</span>'
+        '<div class="compose-button">✎&nbsp; Compose</div>'
+        '<div class="nav-item active">▣&nbsp; Inbox <span class="nav-count">12</span></div>'
+        '<div class="nav-item">☆&nbsp; Starred</div><div class="nav-item">◷&nbsp; Snoozed</div>'
+        '<div class="nav-item">△&nbsp; Sent</div><div class="nav-item">▤&nbsp; Drafts</div>'
+        '<div class="nav-section">Academic mail</div>'
+        f'<div class="nav-mini active"><b>{html.escape(shell_course)} Course Team</b><span>{html.escape(shell_subject)}<br>Deadline update detected</span></div>'
+        '<div class="nav-mini"><b>Library Services</b><span>New resources for your studies</span></div>'
+        '<div class="nav-mini"><b>Student Support</b><span>Wellbeing resources</span></div>'
+        '<div class="nav-mini"><b>Registrar</b><span>Semester enrolment update</span></div>'
+        '<div class="nav-footer"><div class="nav-item">▧&nbsp; Calendar</div><div class="nav-item">⚙&nbsp; Settings</div></div>'
+        '</section>'
+        '<section class="mail-pane message">'
+        '<div class="message-tools">↶ Reply &nbsp; ↶ Reply all &nbsp; ↗ Forward &nbsp; ···</div>'
+        f'<div class="sender-row"><div class="sender-avatar">🎓</div><div><b>{html.escape(shell_course)} Course Team</b><span>to me · academic announcement</span></div><span class="message-time">10:24 AM</span></div>'
+        f'<div class="message-subject">{html.escape(shell_title)}</div>'
+        '<div class="message-copy">Dear student,<br><br>'
+        'We are writing to inform you that the deadline for this assessed task has been updated. '
+        f'<strong>{html.escape(shell_evidence)}</strong><br><br>'
+        'Please refer to the course brief for the complete requirements. AI Scroll keeps this exact sentence as evidence for every proposed calendar action.<br><br>'
+        f'Best regards,<br>{html.escape(shell_course)} Course Team</div>'
+        '<div class="attachment"><div class="attachment-icon">▰</div><div><b>Course_Project_Brief.pdf</b><span>2.4 MB · source retained for review</span></div></div>'
+        '</section>'
+        '<section class="mail-pane plan"><div class="plan-head"><div class="plan-logo"><i>✦</i> AI Scroll</div><span class="detect-pill">Assignment detected</span></div>'
+        '<div class="plan-card"><div class="plan-title-row"><div class="plan-icon">▣</div><div>'
+        f'<b>{html.escape(shell_course)} · {html.escape(shell_title)}</b><span class="deadline-badge">Due: {html.escape(shell_deadline)}</span></div></div>'
+        '<div class="action-label">Your action plan <small>任务行动卡</small></div>'
+        f'{steps_html}'
+        f'<div class="evidence-strip"><b>Evidence:</b> {html.escape(shell_evidence)}</div>'
+        '</div><div class="calendar-cta">▧&nbsp; Add plan to calendar</div>'
+        '<div class="approval-lock"><i>✓</i><div><b>Human approval required · 需要确认</b><span>Review the plan before it is added to your calendar.</span></div><span class="approval-action">Approve plan</span></div>'
+        '</section>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
 
     st.markdown('<div class="shell-note">Mailbox is read only · Calendar writes remain locked until approval</div>', unsafe_allow_html=True)
     scan_col, edit_col, review_col = st.columns([1.3, 1, 1])

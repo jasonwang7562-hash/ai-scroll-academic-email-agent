@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+import subprocess
 
 from docx import Document
-from docx.enum.section import WD_SECTION
 from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT, WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
@@ -12,216 +12,193 @@ from docx.shared import Inches, Pt, RGBColor
 
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "05_report" / "AI_Scroll_Trade_Off_Analysis_Draft.docx"
+OUTPUT = ROOT / "05_report" / "AI_Scroll_Trade_Off_Analysis_Final.docx"
+ASSET_DIR = ROOT / "05_report" / "assets"
+UI_IMAGE = ROOT / "06_demo" / "ui_final_wide.png"
+CHART_IMAGE = ASSET_DIR / "evaluation_comparison.png"
+
+NAVY, TEAL, MINT = "0B2D49", "119E96", "E6F6F3"
+PALE, MUTED, WHITE = "F3F7FA", "60748A", "FFFFFF"
 
 
-def set_cell_fill(cell, color: str) -> None:
-    tc_pr = cell._tc.get_or_add_tcPr()
-    shd = tc_pr.find(qn("w:shd"))
-    if shd is None:
-        shd = OxmlElement("w:shd")
-        tc_pr.append(shd)
-    shd.set(qn("w:fill"), color)
+def shade(cell, color: str) -> None:
+    props = cell._tc.get_or_add_tcPr()
+    node = props.find(qn("w:shd"))
+    if node is None:
+        node = OxmlElement("w:shd")
+        props.append(node)
+    node.set(qn("w:fill"), color)
 
 
-def set_cell_margins(cell, top=65, start=115, bottom=65, end=115) -> None:
-    tc = cell._tc
-    tc_pr = tc.get_or_add_tcPr()
-    tc_mar = tc_pr.first_child_found_in("w:tcMar")
+def margins(cell, top=110, start=140, bottom=110, end=140) -> None:
+    props = cell._tc.get_or_add_tcPr()
+    tc_mar = props.first_child_found_in("w:tcMar")
     if tc_mar is None:
         tc_mar = OxmlElement("w:tcMar")
-        tc_pr.append(tc_mar)
-    for margin, value in (("top", top), ("start", start), ("bottom", bottom), ("end", end)):
-        node = tc_mar.find(qn(f"w:{margin}"))
+        props.append(tc_mar)
+    for name, value in (("top", top), ("start", start), ("bottom", bottom), ("end", end)):
+        node = tc_mar.find(qn(f"w:{name}"))
         if node is None:
-            node = OxmlElement(f"w:{margin}")
+            node = OxmlElement(f"w:{name}")
             tc_mar.append(node)
         node.set(qn("w:w"), str(value))
         node.set(qn("w:type"), "dxa")
 
 
-def set_repeat_table_header(row) -> None:
-    tr_pr = row._tr.get_or_add_trPr()
-    tbl_header = OxmlElement("w:tblHeader")
-    tbl_header.set(qn("w:val"), "true")
-    tr_pr.append(tbl_header)
+def font(run, size=10, bold=False, color=NAVY) -> None:
+    run.font.name = "Arial"
+    run._element.rPr.rFonts.set(qn("w:eastAsia"), "Microsoft YaHei")
+    run.font.size = Pt(size)
+    run.font.bold = bold
+    run.font.color.rgb = RGBColor.from_string(color)
 
 
-def add_table(document: Document, headers: list[str], rows: list[list[str]], widths: list[float]) -> None:
-    table = document.add_table(rows=1, cols=len(headers))
+def add_body(doc: Document, text: str) -> None:
+    p = doc.add_paragraph()
+    p.paragraph_format.space_after = Pt(6)
+    p.paragraph_format.line_spacing = 1.12
+    font(p.add_run(text), 10)
+
+
+def heading(doc: Document, text: str) -> None:
+    p = doc.add_paragraph()
+    p.paragraph_format.keep_with_next = True
+    p.paragraph_format.space_before = Pt(10)
+    p.paragraph_format.space_after = Pt(4)
+    font(p.add_run(text), 15, True)
+
+
+def callout(doc: Document, label: str, text: str, fill=MINT) -> None:
+    table = doc.add_table(rows=1, cols=1)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    table.style = "Table Grid"
-    set_repeat_table_header(table.rows[0])
-    for index, header in enumerate(headers):
-        cell = table.rows[0].cells[index]
-        cell.width = Inches(widths[index])
-        set_cell_fill(cell, "1F5E4A")
-        cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
-        set_cell_margins(cell)
-        paragraph = cell.paragraphs[0]
-        paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        run = paragraph.add_run(header)
-        run.bold = True
-        run.font.color.rgb = RGBColor(255, 255, 255)
-        run.font.size = Pt(8.7)
-    for row_index, values in enumerate(rows):
+    cell = table.cell(0, 0)
+    shade(cell, fill)
+    margins(cell, 180, 190, 180, 190)
+    p = cell.paragraphs[0]
+    font(p.add_run(label.upper() + "\n"), 9, True, TEAL)
+    font(p.add_run(text), 11, True)
+
+
+def compact_table(doc: Document, headers: list[str], rows: list[list[str]], widths: list[float]) -> None:
+    table = doc.add_table(rows=1, cols=len(headers))
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table.autofit = False
+    for i, (label, width) in enumerate(zip(headers, widths)):
+        table.columns[i].width = Inches(width)
+        cell = table.rows[0].cells[i]
+        shade(cell, NAVY)
+        margins(cell)
+        p = cell.paragraphs[0]
+        p.alignment = WD_ALIGN_PARAGRAPH.LEFT if i == 0 else WD_ALIGN_PARAGRAPH.CENTER
+        font(p.add_run(label), 8.5, True, WHITE)
+    for row_i, values in enumerate(rows):
         cells = table.add_row().cells
-        for index, value in enumerate(values):
-            cells[index].width = Inches(widths[index])
-            cells[index].vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
-            set_cell_margins(cells[index])
-            if row_index % 2:
-                set_cell_fill(cells[index], "F2F7F5")
-            paragraph = cells[index].paragraphs[0]
-            paragraph.alignment = WD_ALIGN_PARAGRAPH.LEFT if index == 0 else WD_ALIGN_PARAGRAPH.CENTER
-            run = paragraph.add_run(value)
-            run.font.size = Pt(8.7)
+        for i, (cell, value) in enumerate(zip(cells, values)):
+            cell.width = Inches(widths[i])
+            cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+            shade(cell, WHITE if row_i % 2 == 0 else PALE)
+            margins(cell, 90, 115, 90, 115)
+            p = cell.paragraphs[0]
+            p.alignment = WD_ALIGN_PARAGRAPH.LEFT if i == 0 else WD_ALIGN_PARAGRAPH.CENTER
+            font(p.add_run(value), 8.5, i == 0)
 
 
-def add_body(document: Document, text: str) -> None:
-    paragraph = document.add_paragraph(text)
-    paragraph.style = document.styles["Body Text"]
+def make_chart() -> None:
+    ASSET_DIR.mkdir(parents=True, exist_ok=True)
+    subprocess.run([r"E:\Python\python.exe", str(ROOT / "05_report" / "build_evaluation_chart.py")], check=True)
+
+
+def add_page_number(paragraph) -> None:
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    font(paragraph.add_run("AI Scroll  ·  PE6201  |  "), 8, False, MUTED)
+    fld = OxmlElement("w:fldSimple")
+    fld.set(qn("w:instr"), "PAGE")
+    paragraph._p.append(fld)
 
 
 def build() -> None:
+    make_chart()
     doc = Document()
-    section = doc.sections[0]
-    section.page_width = Inches(8.5)
-    section.page_height = Inches(11)
-    section.top_margin = Inches(0.72)
-    section.bottom_margin = Inches(0.72)
-    section.left_margin = Inches(0.78)
-    section.right_margin = Inches(0.78)
+    sec = doc.sections[0]
+    sec.page_width, sec.page_height = Inches(8.5), Inches(11)
+    sec.top_margin = sec.bottom_margin = Inches(0.62)
+    sec.left_margin = sec.right_margin = Inches(0.72)
+    normal = doc.styles["Normal"]
+    normal.font.name = "Arial"
+    normal._element.rPr.rFonts.set(qn("w:eastAsia"), "Microsoft YaHei")
+    normal.font.size = Pt(10)
+    normal.font.color.rgb = RGBColor.from_string(NAVY)
 
-    styles = doc.styles
-    normal = styles["Normal"]
-    normal.font.name = "Aptos"
-    normal.font.size = Pt(10.5)
-    normal.font.color.rgb = RGBColor(0, 0, 0)
-    normal.paragraph_format.space_after = Pt(6)
-    normal.paragraph_format.line_spacing = 1.08
-    body = styles["Body Text"]
-    body.font.name = "Aptos"
-    body.font.size = Pt(10.5)
-    body.font.color.rgb = RGBColor(0, 0, 0)
-    body.paragraph_format.space_after = Pt(7)
-    body.paragraph_format.line_spacing = 1.12
-    for style_name, size in (("Title", 22), ("Heading 1", 15), ("Heading 2", 12)):
-        style = styles[style_name]
-        style.font.name = "Aptos Display"
-        style.font.size = Pt(size)
-        style.font.color.rgb = RGBColor(0, 0, 0)
-        style.font.bold = True
-        style.paragraph_format.keep_with_next = True
-        style.paragraph_format.space_before = Pt(12 if style_name != "Title" else 0)
-        style.paragraph_format.space_after = Pt(5)
-    title_style_pr = styles["Title"]._element.get_or_add_pPr()
-    title_style_border = title_style_pr.find(qn("w:pBdr"))
-    if title_style_border is not None:
-        title_style_pr.remove(title_style_border)
+    p = doc.add_paragraph()
+    p.paragraph_format.space_after = Pt(2)
+    font(p.add_run("PE6201 · END-OF-COURSE PROJECT"), 9, True, TEAL)
+    p = doc.add_paragraph()
+    p.paragraph_format.space_after = Pt(2)
+    font(p.add_run("AI Scroll"), 28, True)
+    p = doc.add_paragraph()
+    p.paragraph_format.space_after = Pt(9)
+    font(p.add_run("Business and Technical Trade-off Analysis"), 18, True, TEAL)
+    p = doc.add_paragraph()
+    p.paragraph_format.space_after = Pt(10)
+    font(p.add_run("Wang Chen Yu Jason  ·  Submission version  ·  4 October 2026"), 9, True, MUTED)
+    callout(doc, "Executive decision", "Use an evidence-first hybrid Agent: a language model interprets academic email, deterministic controls validate and merge results, and the student approves every calendar write.")
+    heading(doc, "Problem and product decision")
+    add_body(doc, "Students receive deadlines, extensions, cancellations and submission rules across many messages. The hard case is a chain in which a later email changes the original instruction. Manual search and copy-paste are slow and can preserve an obsolete deadline. AI Scroll converts selected course emails into one evidence-backed timeline, a backward study plan and a calendar proposal. The system automates interpretation and preparation while keeping the final external action under explicit user control.")
+    doc.add_picture(str(UI_IMAGE), width=Inches(7.0))
+    cap = doc.add_paragraph("Figure 1. Working interface: inbox evidence, selected message and approval-gated action plan.")
+    cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    font(cap.runs[0], 8, False, MUTED)
 
-    title = doc.add_paragraph(style="Title")
-    title.add_run("AI Scroll Business and Technical Trade Off Analysis")
-    title_pr = title._p.get_or_add_pPr()
-    title_border = title_pr.find(qn("w:pBdr"))
-    if title_border is not None:
-        title_pr.remove(title_border)
-    subtitle = doc.add_paragraph()
-    subtitle.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    run = subtitle.add_run("PE6201 End of Course Project   |   Wang Chen Yu Jason   |   Draft 27 September 2026")
-    run.bold = True
-    run.font.size = Pt(10)
-    run.font.color.rgb = RGBColor(56, 56, 56)
-    status = doc.add_paragraph()
-    status_run = status.add_run("Evidence status  ")
-    status_run.bold = True
-    status.add_run(
-        "This draft uses the current deterministic development run. Final model metrics and measured cost will replace the provisional values after the 50 labels are reviewed and frozen."
-    )
+    doc.add_page_break()
+    heading(doc, "System scope and hybrid architecture")
+    add_body(doc, "The Agent reads from authorized Gmail or Outlook accounts, filters by course before a model call, extracts a structured task and exact evidence sentence, matches related messages, applies later corrections, and plans backwards from the verified deadline. GPT-5 Mini through OpenRouter handles varied language. Application code controls ISO date validation, Singapore time, urgency thresholds, deduplication, merge history and approval. Google Calendar writes are available only after review.")
+    compact_table(doc, ["Decision", "Selected approach", "Benefit", "Cost or constraint"], [
+        ["Language vs rules", "Hybrid Agent", "Flexible interpretation with inspectable controls", "More integration and validation code"],
+        ["Build vs buy", "Build workflow; rent model and APIs", "Fast development; replaceable model", "Provider cost, latency and privacy exposure"],
+        ["Mailbox access", "Narrow OAuth connectors", "No manual email copy-paste", "Authorization and tenant-policy dependency"],
+        ["Calendar action", "Preview then approve", "Blocks silent or unsafe writes", "One extra user step"],
+        ["Polling", "Metadata first; model only for changes", "Lower cost at high freshness", "Requires message-state tracking"],
+    ], [1.2, 1.55, 2.25, 2.05])
+    heading(doc, "Business and operating trade-offs")
+    add_body(doc, "I build the workflow, schemas, thread matcher, merge engine, urgency policy, evaluation harness and approval gate. I rent the language model and use existing mailbox and calendar infrastructure. This avoids hosting model weights and shortens development time, while configuration keeps the model endpoint replaceable. The trade-off is dependency on provider availability, dated prices and OAuth policy.")
+    add_body(doc, "Freshness does not require paying for a model call every time the inbox is checked. A naive 15-minute model job creates 2,880 monthly calls even when nothing changes; hourly polling creates 720. AI Scroll checks identifiers and course scope first, then calls the model only for new or changed messages. At 20 relevant emails per day, both schedules require about 600 model calls per 30-day month.")
+    callout(doc, "Measured live cost", "Six web-derived cases cost US$0.01074 in total, or about US$0.00179 per processed case.", fill=PALE)
 
-    doc.add_heading("Problem and decision", level=1)
-    add_body(doc, (
-        "University students receive deadlines, class changes, submission rules and administrative requests across many emails. "
-        "The difficult cases are not single messages with the word deadline; they are chains in which a later email changes a date, room or requirement. "
-        "The closest alternative is manual search followed by copying information into a calendar. That process is slow and can preserve an obsolete instruction. "
-        "I am building AI Scroll to convert selected academic emails into one evidence-backed course timeline and a calendar proposal. "
-        "The main design decision is to automate interpretation and preparation while keeping the final calendar write under explicit user control."
-    ))
+    doc.add_page_break()
+    heading(doc, "Data and evaluation design")
+    add_body(doc, "The development set contains 50 synthetic academic emails across 38 threads: 30 independent emails and eight multi-email threads containing 20 messages. It includes 11 updates, three clarification cases and one cancellation. Each row contains draft labels for course, task type, title, deadline, urgency, evidence, relation and calendar action. Metrics are reported separately because task classification, deadline extraction, urgency and merging are different problems.")
+    doc.add_picture(str(CHART_IMAGE), width=Inches(7.0))
+    cap = doc.add_paragraph("Figure 2. Development comparison using draft labels; percentages use the eligible cases for each capability.")
+    cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    font(cap.runs[0], 8, False, MUTED)
+    compact_table(doc, ["Evidence item", "Result", "Interpretation"], [
+        ["Automated tests", "47 passed", "Core extraction, merge, planning and safety paths"],
+        ["Live web-derived cases", "6 / 6 passed", "Current model handled the selected edge cases"],
+        ["Cross-email final state", "8 / 8", "All development chains reached the expected latest state"],
+        ["Unauthorized calendar writes", "0", "Approval gate blocked unconfirmed external action"],
+    ], [2.1, 1.3, 3.55])
+    add_body(doc, "The pipeline improves strongly on the keyword-and-date baseline for task type, calendar action and cross-email merging. These figures support the design direction, but they remain development evidence because the labels are not yet frozen and the data is synthetic. The evaluation preserves the denominator for each capability and avoids presenting one blended accuracy score.")
 
-    doc.add_heading("System scope and hybrid architecture", level=1)
-    add_body(doc, (
-        "AI Scroll accepts manually selected or pre-filtered academic emails. It identifies the course and task, normalizes an explicit date and time zone, retrieves related messages, applies later corrections, and shows the exact source sentence. "
-        "It then proposes create, update, clarification or no-action. The current prototype never writes to an external calendar. An in-memory adapter demonstrates the approval gate and deduplication path without changing a real account."
-    ))
-    add_body(doc, (
-        "A hybrid architecture is more appropriate than either rules or a language model alone. A foundation model is useful for varied wording and implicit academic actions. Retrieval and thread matching are needed when evidence is spread across messages. "
-        "Deterministic code is better for ISO date validation, fixed urgency thresholds, duplicate prevention and approval enforcement because these rules must be inspectable and repeatable. "
-        "This separation also limits the effect of a malformed or overconfident model response: structured validation can reject it before any action is proposed."
-    ))
+    doc.add_page_break()
+    heading(doc, "Risks and implemented controls")
+    compact_table(doc, ["Risk", "Implemented control", "Remaining limitation"], [
+        ["Wrong or obsolete deadline", "Exact evidence, thread history and later-update merge", "Ambiguous language can still require clarification"],
+        ["Unsafe calendar action", "Preview, expiry check, deduplication and human approval", "User may approve an incorrect proposal"],
+        ["Privacy exposure", "Course filtering, narrow OAuth and minimal structured storage", "External providers still process selected content"],
+        ["Provider failure", "Replaceable model configuration and deterministic fallback paths", "Quality may change across providers"],
+        ["Overstated evaluation", "Capability counts, fixed denominators and draft-label disclosure", "Synthetic data cannot prove generalization"],
+    ], [1.65, 3.1, 2.2])
+    heading(doc, "Limitations and next evidence")
+    add_body(doc, "The dataset is synthetic, its holdout was generated by the same process, and only eight threads test cross-email reasoning. Six live cases are useful for integration testing but too small for a performance claim. A final evaluation should freeze human-reviewed labels, run one fixed model and prompt over all cases, preserve raw outputs and token logs, calculate dated cost per email and thread, and report residual errors without tuning on the test split.")
+    heading(doc, "Conclusion")
+    add_body(doc, "AI Scroll demonstrates a practical boundary for an academic email Agent. The model handles language, while deterministic code protects dates, history, duplication and approval. The product reduces manual consolidation without removing student control. The current prototype is strong enough to demonstrate the end-to-end workflow; broader real-email evaluation and privacy review are required before deployment.")
+    callout(doc, "Recommendation", "Submit the current prototype as an evidence-backed course project and position real-world deployment as the next validated stage.")
 
-    doc.add_heading("Build versus buy and operating design", level=1)
-    add_body(doc, (
-        "I build the workflow, structured schema, thread matcher, merge history, urgency policy, evaluation scripts and confirmation gate. I would rent the language-model API and use existing Gmail and Google Calendar APIs for infrastructure. "
-        "Buying model capability reduces development time and avoids hosting large weights, but it introduces provider cost, latency and privacy exposure. The application therefore sends only selected academic content, stores minimal structured output, and keeps the model endpoint replaceable through configuration."
-    ))
-    add_body(doc, (
-        "Scheduled processing creates a cost-versus-freshness trade-off. A naive job that calls a model every 15 minutes makes 2,880 monthly calls even when no new email exists; hourly polling makes 720. My design checks message identifiers and labels without a model, then calls the model only for new or changed emails. "
-        "At an assumed 20 new academic emails per day, the model-call count remains 600 per 30-day month for both hourly and 15-minute inbox checks. The final report will multiply measured average input and output tokens by dated provider prices rather than use an unsupported estimate."
-    ))
-
-    doc.add_heading("Data and evaluation", level=1)
-    add_body(doc, (
-        "The reproducible development dataset contains 50 synthetic academic emails across 38 threads. Thirty are independent emails. Eight are genuine multi-email threads containing 20 emails. The set also contains 11 update messages, three clarification cases and one cancellation. "
-        "Each email has draft gold labels for course, task type, title, deadline, urgency, evidence, relation and calendar action. A human review screen now requires every row to be approved before a checksum-protected frozen label file can be created."
-    ))
-    add_table(doc, ["Dataset unit", "Count"], [
-        ["Emails", "50"], ["Threads", "38"], ["Independent emails", "30"],
-        ["Multi-email threads", "8"], ["Emails in multi-email threads", "20"],
-    ], [4.9, 1.2])
-    add_body(doc, (
-        "I compare the same cases with a keyword-and-date baseline and report each capability separately. Dates use a fixed reference time of 26 September 2026 at 12:00 SGT. Deadline accuracy uses only the 43 deadline-bearing cases, while false deadlines are counted on seven no-deadline cases. "
-        "Cross-email merging uses only the eight genuine chains. Clarification precision and recall show whether safety comes from selective abstention or indiscriminate refusal. Calendar safety is tested separately and requires zero unauthorized writes."
-    ))
-
-    doc.add_heading("Development evidence", level=1)
-    add_body(doc, (
-        "The current deterministic pipeline is stronger than the simple baseline on the draft labels. It identifies 43 of 50 task types, 40 of 43 exact deadlines, 48 of 50 urgency labels, 45 of 50 calendar actions and the final state of all eight multi-email chains. "
-        "The baseline reaches 28 of 50 task types, 32 of 43 deadlines, 41 of 50 urgency labels, 28 of 50 calendar actions and no multi-email merges. The current system also detects all three draft clarification cases. These results guide debugging; they are not the final claimed model performance because the labels remain pending human review and the data is synthetic."
-    ))
-    add_table(doc, ["Capability", "Baseline", "Current pipeline"], [
-        ["Course identification", "50/50", "50/50"],
-        ["Task type", "28/50", "43/50"],
-        ["Exact deadline", "32/43", "40/43"],
-        ["Urgency", "41/50", "48/50"],
-        ["Calendar action", "28/50", "45/50"],
-        ["Cross-email final state", "0/8", "8/8"],
-    ], [3.4, 1.35, 1.55])
-
-    doc.add_heading("Risks and implemented controls", level=1)
-    add_body(doc, (
-        "The highest-impact failure is a missed or incorrect deadline. AI Scroll keeps a verbatim evidence trail and asks for clarification when date, time or time zone is unsafe to infer. Later related messages retain field-level change history, and cancellations block calendar proposals. "
-        "Duplicate proposals are deduplicated, expired items are rejected, and unconfirmed writes cannot reach the calendar adapter. The development safety test blocked the unconfirmed attempt, prevented the duplicate, blocked both unsafe cases and recorded zero unauthorized writes."
-    ))
-    add_body(doc, (
-        "Privacy remains a deployment constraint because academic emails may contain personal information. The first version uses synthetic or manually selected text and avoids raw-inbox ingestion. A real deployment should request narrow OAuth scopes, filter metadata before model processing, encrypt stored structured data and define retention rules. "
-        "Users should see the source and proposal before approval, because even a high measured extraction score cannot justify silent calendar changes."
-    ))
-
-    doc.add_heading("Limitations and next evidence", level=1)
-    add_body(doc, (
-        "The current evidence cannot prove real-world generalization. The dataset is synthetic, its holdout was produced by the same generator, and only eight threads test cross-email reasoning. The deterministic development pipeline is not the final language-model configuration. "
-        "The next evaluation will freeze human-reviewed labels, run one exact model and prompt over all cases, preserve raw outputs and token logs, calculate dated cost per email and thread, and report the remaining errors without tuning on the test or holdout splits."
-    ))
-
-    footer = section.footer.paragraphs[0]
-    footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    footer_run = footer.add_run("PE6201   AI Scroll   Business and Technical Trade Off Analysis")
-    footer_run.font.size = Pt(8)
-    footer_run.font.color.rgb = RGBColor(90, 90, 90)
-
-    doc.core_properties.title = "AI Scroll Business and Technical Trade Off Analysis"
+    for section in doc.sections:
+        add_page_number(section.footer.paragraphs[0])
+    doc.core_properties.title = "AI Scroll Business and Technical Trade-off Analysis"
     doc.core_properties.author = "Wang Chen Yu Jason"
-    doc.core_properties.subject = "PE6201 End of Course Project"
+    doc.core_properties.subject = "PE6201 End-of-Course Project"
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     doc.save(OUTPUT)
     print(OUTPUT)

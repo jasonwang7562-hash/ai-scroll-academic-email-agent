@@ -75,15 +75,19 @@ def demo_extract(email: EmailInput, now=None) -> ExtractedTask:
     course_match = COURSE_PATTERN.search(source_text)
     course = course_match.group(0) if course_match else "Unknown course"
     evidence = evidence_sentence(email.body)
-    deadline_iso, clarification = parse_deadline(evidence or email.body)
+    deadline_iso, clarification = parse_deadline(evidence or email.body, reference=now)
     email_id = stable_id("email", f"{email.subject}|{email.sender}|{email.body}")
     thread_id = stable_id("thread", f"{course}|{email.subject.lower()}")
 
     lowered = source_text.lower()
     is_cancel = any(term in lowered for term in ("cancelled", "canceled"))
     informational = any(
-        term in lowered for term in ("optional", "no submission requirement", "resources are now available")
+        term in lowered for term in ("no submission requirement", "resources are now available")
     )
+    # "Optional" can describe one small report section inside an otherwise
+    # mandatory assignment email. Only treat it as an informational signal
+    # when the message has no verified deadline.
+    informational = informational or ("optional" in lowered and deadline_iso is None)
     platform_metadata_only = (
         "scheduled to post" in lowered
         or "not available until" in lowered
@@ -118,7 +122,15 @@ def demo_extract(email: EmailInput, now=None) -> ExtractedTask:
         urgency = urgency_for(deadline_iso, source_text, now=now)
         calendar_action = "update" if is_update else "create"
 
-    title = re.sub(COURSE_PATTERN, "", email.subject).strip(" -:|") or "Academic task"
+    clean_subject = re.sub(r"^(?:re|fw|fwd|转发|答复)\s*:\s*", "", email.subject, flags=re.IGNORECASE)
+    clean_subject = re.sub(COURSE_PATTERN, "", clean_subject).strip(" -:|")
+    clean_subject = re.sub(
+        r"^EMERGING\s+AI\s+TECHNOLOGIES-GROUP\s+[A-Z]\s*:\s*",
+        "",
+        clean_subject,
+        flags=re.IGNORECASE,
+    )
+    title = clean_subject or "Academic task"
     return ExtractedTask(
         email_id=email_id,
         thread_id=thread_id,

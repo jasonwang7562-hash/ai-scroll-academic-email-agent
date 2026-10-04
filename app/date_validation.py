@@ -14,12 +14,32 @@ DATE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+MONTH_FIRST_PATTERN = re.compile(
+    r"\b(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)?\s*,?\s*"
+    r"(January|February|March|April|May|June|July|August|September|October|November|December)"
+    r"\s+(?:the\s+)?(\d{1,2})(?:st|nd|rd|th)?(?:\s*,?\s*(\d{4}))?"
+    r"\s*,?\s*(\d{1,2}:\d{2})(?:\s*(AM|PM))?\s*(?:hrs?)?\s*"
+    r"(SGT|Singapore time)\b",
+    re.IGNORECASE,
+)
 
-def parse_deadline(text: str) -> tuple[str | None, str | None]:
+
+def parse_deadline(text: str, reference: datetime | None = None) -> tuple[str | None, str | None]:
     """Return an ISO deadline and a clarification reason, if any."""
     match = DATE_PATTERN.search(text)
     if not match:
-        return None, "No explicit calendar date was found."
+        month_first = MONTH_FIRST_PATTERN.search(text)
+        if not month_first:
+            return None, "No explicit calendar date was found."
+        month, day, year, clock, meridiem, _timezone = month_first.groups()
+        reference = reference or datetime.now(SINGAPORE)
+        resolved_year = int(year) if year else reference.year
+        parsed = parser.parse(
+            f"{day} {month} {resolved_year} {clock}{(' ' + meridiem) if meridiem else ''}",
+            dayfirst=True,
+        )
+        localized = parsed.replace(tzinfo=SINGAPORE)
+        return localized.isoformat(), None
     date_part, time_part, timezone_part = match.groups()
     if not time_part:
         return None, "A date was found, but the deadline time is missing."
@@ -48,4 +68,3 @@ def urgency_for(
     if hours <= 7 * 24:
         return "medium"
     return "low"
-

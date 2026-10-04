@@ -14,6 +14,7 @@ STOPWORDS = {
     "submission", "instead", "email", "remains", "now", "not", "through",
     "january", "february", "march", "april", "may", "june", "july", "august",
     "september", "october", "november", "december", "sgt",
+    "emerging", "technologies", "group",
 }
 
 
@@ -26,12 +27,15 @@ def match_score(email: EmailInput, item: TimelineItem) -> float:
     course_match = re.search(COURSE_PATTERN, f"{email.subject} {email.body}")
     if not course_match or course_match.group(0).upper() != item.course.upper():
         return 0.0
-    incoming = keywords(f"{email.subject} {email.body}")
+    # Forwarded LMS messages share large, repeated Blackboard footers. Matching
+    # on the full body therefore collapses unrelated announcements from the
+    # same course into one false thread. Subjects carry the stable task identity
+    # while evidence remains available to the extraction and audit layers.
+    incoming = keywords(email.subject)
     existing = keywords(
         " ".join(
             [item.task_title]
             + [record.source_subject for record in item.evidence_history]
-            + [record.evidence_quote for record in item.evidence_history]
         )
     )
     if not incoming or not existing:

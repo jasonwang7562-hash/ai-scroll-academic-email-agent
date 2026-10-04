@@ -61,6 +61,7 @@ def apply_update(item: TimelineItem, task: ExtractedTask) -> TimelineItem:
         return result
 
     if task.deadline_iso and task.deadline_iso != result.deadline_iso:
+        first_verified_deadline = result.deadline_iso is None
         result.change_history.append(ChangeRecord(
             source_email_id=task.email_id,
             field="deadline_iso",
@@ -69,6 +70,9 @@ def apply_update(item: TimelineItem, task: ExtractedTask) -> TimelineItem:
             reason="A later related email supplied a different explicit deadline.",
         ))
         result.deadline_iso = task.deadline_iso
+        if first_verified_deadline:
+            result.task_title = task.task_title
+            result.task_type = task.task_type
 
     if task.needs_clarification:
         result.status = "clarification"

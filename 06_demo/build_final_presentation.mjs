@@ -11,7 +11,7 @@ const SKILL_DIR = "C:/Users/admin/.codex/plugins/cache/openai-primary-runtime/pr
 const RUNTIME_PYTHON = "C:/Users/admin/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe";
 const buildDir = path.join(workspaceDir, ".pptx-build");
 const stagingDir = path.join(workspaceDir, ".pptx-finalizer");
-const FINAL_PPTX = path.join(workspaceDir, "deliverables", "AI_Scroll_5_Minute_Presentation_v4.pptx");
+const FINAL_PPTX = path.join(workspaceDir, "deliverables", "AI_Scroll_5_Minute_Presentation_v5.pptx");
 await fs.mkdir(buildDir, { recursive: true });
 
 const { resolvePresentationFont, applyPresentationChartFont, finalizePresentation } = await import(
@@ -211,25 +211,50 @@ function addNote(slide, note) {
   addNote(slide, `I chose a hybrid architecture because the two parts of the problem need different strengths. The language model handles varied academic language, extracts evidence and interprets whether a message is a new task or an update. The application code handles the parts that must remain predictable: date validation, Singapore time, urgency thresholds, thread history, deduplication and approval. I built the workflow, merge logic, evaluation and safety controls. I rent the language model and the external mailbox and calendar APIs. This reduces development time while keeping the important project logic visible and testable.`);
 }
 
-// 6. Product experience
+// 6. Business and operating trade-offs
+{
+  const slide = deck.slides.add();
+  slide.background.fill = C.navy;
+  title(slide, "Business and operating trade-offs", 6, true);
+  const decisions = [
+    ["Build workflow · rent capability", "Own the merge, evaluation and safety logic", "Provider cost and dependency"],
+    ["Narrow OAuth connectors", "No manual email copy-paste", "Tenant policy can block access"],
+    ["Metadata first", "Model runs only for new or changed mail", "Requires message-state tracking"],
+    ["Preview then approve", "Zero silent calendar writes", "One extra user step"],
+  ];
+  decisions.forEach((d, i) => {
+    const x = 70 + (i % 2) * 580;
+    const y = 190 + Math.floor(i / 2) * 190;
+    shape(slide, "roundRect", x, y, 540, 150, i === 3 ? "#E1F7F2" : "#123E5C", i === 3 ? "#77D5C8" : "#285A78", 18);
+    text(slide, d[0], x + 28, y + 22, 480, 32, { size: 20, bold: true, color: i === 3 ? C.green : C.white });
+    text(slide, d[1], x + 28, y + 66, 480, 26, { size: 14, bold: true, color: i === 3 ? C.ink : "#8FDCD1" });
+    text(slide, d[2], x + 28, y + 103, 480, 24, { size: 13, color: i === 3 ? C.muted : "#BDD1DF" });
+  });
+  shape(slide, "roundRect", 245, 592, 790, 54, "#0E887F", "none", 16);
+  text(slide, "Measured live cost · 6 cases = US$0.01074 · about US$0.00179 per case", 270, 607, 740, 25, { size: 16, bold: true, color: C.white, align: "center" });
+  footer(slide, 6, true);
+  addNote(slide, `The main operating decision is to build the workflow and safety controls while renting the language model and external APIs. Narrow OAuth connectors remove manual copy and paste, but authorization depends on provider and tenant policy. The inbox is checked cheaply using identifiers and course scope, and the model runs only for new or changed messages. The calendar remains preview first and approval gated. In the current live check, six cases cost about 1.1 cents in total.`);
+}
+
+// 7. Product experience
 {
   const slide = deck.slides.add();
   slide.background.fill = C.white;
-  title(slide, "Final product experience", 6);
+  title(slide, "Final product experience", 7);
   slide.images.add({ blob: uiBytes, contentType: "image/png", alt: "AI Scroll inbox with generated action plan", fit: "contain", position: { left: 55, top: 165, width: 1170, height: 493 }, geometry: "roundRect", borderRadius: "rounded-2xl" });
   shape(slide, "roundRect", 75, 175, 275, 45, C.navy, "none", 12);
   text(slide, "1 · Read the source email", 92, 187, 240, 20, { size: 14, bold: true, color: C.white });
   shape(slide, "roundRect", 930, 175, 270, 45, C.teal, "none", 12);
   text(slide, "2 · Review the action card", 945, 187, 240, 20, { size: 14, bold: true, color: C.white });
-  footer(slide, 6);
+  footer(slide, 7);
   addNote(slide, `This is the current product experience. The left side behaves like an academic inbox. The middle panel keeps the selected email visible, including the exact sentence that created or changed the deadline. The right panel turns the message into a five step action plan. It shows the final deadline, the planned stages and the evidence used by the Agent. The scan button refreshes the interface using the actual mailbox pipeline. Settings stay in a collapsed sidebar, so the main screen remains simple. The user then opens Calendar Review, checks the proposal and confirms it. Without that confirmation, the system performs no calendar write.`);
 }
 
-// 7. Results and close
+// 8. Results and close
 {
   const slide = deck.slides.add();
   slide.background.fill = C.pale;
-  title(slide, "Current evidence and next steps", 7);
+  title(slide, "Evidence, controls and next steps", 8);
   const chart = slide.charts.add("bar", {
     position: { left: 55, top: 180, width: 760, height: 410 },
     categories: ["Task type", "Exact deadline", "Urgency", "Calendar action", "Cross-email merge"],
@@ -259,9 +284,9 @@ function addNote(slide, note) {
     text(slide, m[0], 882, y + 14, 150, 35, { size: 28, bold: true, color: i === 2 ? "#55D8C8" : C.teal });
     text(slide, m[1], 882, y + 54, 280, 24, { size: 13, color: i === 2 ? "#D5E7EF" : C.muted });
   });
-  text(slide, "Next: freeze the 50 human labels, run the final evaluation and record the live demo.", 855, 560, 340, 58, { size: 17, bold: true, color: C.ink, lineSpacing: 1.18 });
+  text(slide, "Controls: exact evidence · merge history · deduplication · human approval", 855, 548, 340, 62, { size: 16, bold: true, color: C.ink, lineSpacing: 1.18 });
   text(slide, "Draft-label comparison shown on the left. Final assessment numbers require label review.", 60, 620, 760, 24, { size: 12, color: C.muted });
-  footer(slide, 7);
+  footer(slide, 8);
   addNote(slide, `The current evidence shows that the pipeline improves on a simple keyword and date baseline, especially for calendar actions and cross email merging. These comparison numbers still use draft labels, so I will not present them as the final assessment result until the 50 labels are reviewed and frozen. The completed live model check passed all six web derived edge cases, the code passes 47 automated tests, and the six case live run cost about 1.1 cents. The next steps are to freeze the labels, run the final evaluation and record the live demo. AI Scroll shows how an Agent can reduce email overload while keeping the student in control.`);
 }
 
@@ -282,13 +307,13 @@ const result = await finalizePresentation({
   integrityValidatorPath: path.join(SKILL_DIR, "container_tools", "inspect_presentation_package_integrity.py"),
   layoutValidatorPath: path.join(SKILL_DIR, "container_tools", "inspect_presentation_layout_geometry.py"),
   layoutArgs: ["--expected-slide-size-emu", "12192000,6858000", "--validate-heading-fit"],
-  explicitTotalSlideCount: 7,
+  explicitTotalSlideCount: 8,
   requiredNativeTableOwnerSlides: [],
-  requiredNativeChartOwnerSlides: [7],
+  requiredNativeChartOwnerSlides: [8],
   materializeLiteralChartWorkbooks: true,
   fontPolicy: { basis: "design", families: [family] },
   verifyArtifactToolImport: true,
-  receiptPath: path.join(stagingDir, "AI_Scroll_5_Minute_Presentation_v4.validation.json"),
+  receiptPath: path.join(stagingDir, "AI_Scroll_5_Minute_Presentation_v5.validation.json"),
 });
 
 console.log(JSON.stringify({ finalPath: FINAL_PPTX, font: family, result }, null, 2));
